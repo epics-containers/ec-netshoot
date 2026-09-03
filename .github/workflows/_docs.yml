@@ -1,0 +1,58 @@
+on:
+  workflow_call:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Avoid git conflicts when tag and branch pushed at same time
+        if: github.ref_type == 'tag'
+        run: sleep 60
+
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          # Need this to get version number from last tag
+          fetch-depth: 0
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # This repo is not a python project - there is no pyproject.toml and no
+      # tox. docs/requirements.txt is the pinned source of truth for the only
+      # python in the repo, which builds these docs and nothing else.
+      - name: Install docs requirements
+        run: pip install -r docs/requirements.txt
+
+      - name: Build docs
+        run: sphinx-build -EW --keep-going -T docs build/html
+
+      - name: Remove environment.pickle
+        run: rm -f build/html/.doctrees/environment.pickle
+
+      - name: Upload built docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs
+          path: build
+
+      - name: Sanitize ref name for docs version
+        run: echo "DOCS_VERSION=${GITHUB_REF_NAME//[^A-Za-z0-9._-]/_}" >> $GITHUB_ENV
+
+      - name: Move to versioned directory
+        run: mv build/html .github/pages/$DOCS_VERSION
+
+      - name: Write switcher.json
+        run: python .github/pages/make_switcher.py --add $DOCS_VERSION ${{ github.repository }} .github/pages/switcher.json
+
+      - name: Publish Docs to gh-pages
+        if: github.ref_type == 'tag' || github.ref_name == 'main'
+        # We pin to the SHA, not the tag, for security reasons.
+        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .github/pages
+          keep_files: true
