@@ -1,0 +1,749 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Design Notes &#8212; ec-netshoot 0e9be9b documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=cb8930eaaf36d9849b67"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
+
+    <script src="../_static/documentation_options.js?v=77622bff"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=30646c52"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'explanations/design';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.21.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://epics-containers.github.io/ec-netshoot/switcher.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0e9be9b';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Architectural Decision Records" href="decisions.html" />
+    <link rel="prev" title="Explanations" href="../explanations.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0e9be9b" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">ec-netshoot</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../tutorials.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../how-to.html">
+    How-to Guides
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../explanations.html">
+    Explanations
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../reference.html">
+    Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/epics-containers/ec-netshoot" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+        <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../tutorials.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../how-to.html">
+    How-to Guides
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../explanations.html">
+    Explanations
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../reference.html">
+    Reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/epics-containers/ec-netshoot" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+          <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-3"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-3"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-3"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-3">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item pst-sidebar-collapse"><button id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar">
+  <svg class="pst-icon" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <path fill="currentColor" d="M3 15.5C2.36232 15.5 1.74874 15.2564 1.28478 14.8189C0.820828 14.3815 0.541576 13.7832 0.504167 13.1467L0.5 13L0.5 3C0.499965 2.36232 0.743605 1.74874 1.18107 1.28478C1.61854 0.820828 2.21676 0.541576 2.85333 0.504167L3 0.5L13 0.5C13.6377 0.499965 14.2513 0.743605 14.7152 1.18107C15.1792 1.61854 15.4584 2.21676 15.4958 2.85333L15.5 3L15.5 13C15.5 13.6377 15.2564 14.2513 14.8189 14.7152C14.3815 15.1792 13.7832 15.4584 13.1467 15.4958L13 15.5L3 15.5ZM3 13.8333L10.5 13.8333L10.5 2.16667L3 2.16667C2.79589 2.16669 2.59889 2.24163 2.44636 2.37726C2.29383 2.5129 2.19638 2.69979 2.1725 2.9025L2.16667 3L2.16667 13C2.16669 13.2041 2.24163 13.4011 2.37726 13.5536C2.5129 13.7062 2.69979 13.8036 2.9025 13.8275L3 13.8333ZM6.65583 10.325L6.5775 10.2558L4.91083 8.58917C4.76735 8.44567 4.68116 8.25476 4.66843 8.05223C4.65569 7.84971 4.71729 7.6495 4.84167 7.48917L4.91083 7.41083L6.5775 5.74417C6.72747 5.59471 6.9287 5.50794 7.14032 5.50148C7.35194 5.49502 7.55809 5.56935 7.7169 5.70937C7.8757 5.8494 7.97525 6.04463 7.99533 6.25539C8.01541 6.46616 7.95451 6.67667 7.825 6.84417L7.75583 6.9225L6.67917 8L7.75583 9.0775C7.89931 9.22099 7.98551 9.41191 7.99824 9.61443C8.01097 9.81695 7.94938 10.0172 7.825 10.1775L7.75583 10.2558C7.61234 10.3993 7.42142 10.4855 7.2189 10.4982C7.01638 10.511 6.81617 10.4494 6.65583 10.325Z"/>
+  </svg>
+  <span class="pst-collapse-sidebar-label">Collapse Sidebar</span>
+  <span class="pst-expand-sidebar-label">Expand Sidebar</span>
+</button></div>
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Design Notes</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="decisions.html">Architectural Decision Records</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="decisions/0001-record-architecture-decisions.html">1. Record architecture decisions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="decisions/0002-base-on-epics-base-developer.html">2. Base on epics-base-developer</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../explanations.html" class="nav-link">Explanations</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Design Notes</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="design-notes">
+<h1>Design Notes<a class="headerlink" href="#design-notes" title="Link to this heading">#</a></h1>
+<p>Why this exists in the shape it does. Most of this is here because the
+reasoning is not obvious from the code, and without it the next person will
+reasonably “simplify” something load-bearing back out.</p>
+<section id="why-not-just-use-netshoot">
+<h2>Why not just use netshoot?<a class="headerlink" href="#why-not-just-use-netshoot" title="Link to this heading">#</a></h2>
+<p><a class="reference external" href="https://github.com/nicolaka/netshoot"><code class="docutils literal notranslate"><span class="pre">nicolaka/netshoot</span></code></a> is the standard
+answer for network debugging in Kubernetes, and most of this image is the same
+idea. Two differences justify a separate thing:</p>
+<ul class="simple">
+<li><p><strong>EPICS.</strong> <code class="docutils literal notranslate"><span class="pre">caget</span></code>, <code class="docutils literal notranslate"><span class="pre">cainfo</span></code>, <code class="docutils literal notranslate"><span class="pre">pvxget</span></code> and <code class="docutils literal notranslate"><span class="pre">pvxinfo</span></code> are the only tools that
+exercise CA and PVA the way an IOC does. “The TCP port is open but <code class="docutils literal notranslate"><span class="pre">caget</span></code>
+times out” is a real and common state, and no generic tool will tell you
+about it.</p></li>
+<li><p><strong>A launcher that knows about the awkward bits.</strong> The pod spec needed to make
+<code class="docutils literal notranslate"><span class="pre">ping</span></code> work unprivileged, to keep DNS working under <code class="docutils literal notranslate"><span class="pre">hostNetwork</span></code>, and to get
+a ServiceAccount token mounted, is not something anyone wants to retype
+during an incident.</p></li>
+</ul>
+</section>
+<section id="why-not-kubectl-debug">
+<h2>Why not <code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">debug</span></code>?<a class="headerlink" href="#why-not-kubectl-debug" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">debug</span> <span class="pre">--target</span></code> attaches an ephemeral container to an existing pod,
+sharing its network namespace. That is genuinely better when the question is
+“what does <em>this specific pod</em> see”. It is no help when the question is “can
+anything in this namespace reach that device”, because there may be no pod to
+attach to — or the pod you would attach to is the one that is crash-looping.</p>
+<p>The two are complementary. Reach for <code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">debug</span></code> when you have a live pod
+whose exact view you need; reach for <code class="docutils literal notranslate"><span class="pre">netshoot</span></code> when you need a vantage point.</p>
+</section>
+<section id="making-ping-work-without-privilege">
+<h2>Making ping work without privilege<a class="headerlink" href="#making-ping-work-without-privilege" title="Link to this heading">#</a></h2>
+<p>There are only two ways a process gets ICMP echo on Linux:</p>
+<ol class="arabic simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">SOCK_RAW</span></code></strong>, which needs <code class="docutils literal notranslate"><span class="pre">CAP_NET_RAW</span></code>. Ubuntu ships <code class="docutils literal notranslate"><span class="pre">/usr/bin/ping</span></code> with
+the <code class="docutils literal notranslate"><span class="pre">cap_net_raw+ep</span></code> <em>file</em> capability rather than setuid. That works in a
+default pod — but not with <code class="docutils literal notranslate"><span class="pre">allowPrivilegeEscalation:</span> <span class="pre">false</span></code>, because that
+sets <code class="docutils literal notranslate"><span class="pre">NoNewPrivs</span></code>, and <strong><code class="docutils literal notranslate"><span class="pre">NoNewPrivs</span></code> makes the kernel ignore file
+capabilities entirely</strong>. It also does not survive <code class="docutils literal notranslate"><span class="pre">drop:</span> <span class="pre">[&quot;ALL&quot;]</span></code>. The
+restricted Pod Security Standard mandates both.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">SOCK_DGRAM</span></code> with <code class="docutils literal notranslate"><span class="pre">IPPROTO_ICMP</span></code></strong>, which needs <strong>no capability at all</strong>.
+It is gated only on the netns sysctl <code class="docutils literal notranslate"><span class="pre">net.ipv4.ping_group_range</span></code> covering
+the process’s GID. Modern <code class="docutils literal notranslate"><span class="pre">iputils-ping</span></code> tries this first and only falls
+back to raw. The default is <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">0</span></code> — an empty range — so it fails in a pod.</p></li>
+</ol>
+<p>The lever is that <strong><code class="docutils literal notranslate"><span class="pre">net.ipv4.ping_group_range</span></code> is on Kubernetes’ <em>safe</em>
+sysctl list</strong>. Safe sysctls are namespaced per-pod, need no kubelet flag, and
+are permitted under both the baseline and restricted Pod Security Standards.
+So the launcher sets:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="nt">"securityContext"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"sysctls"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"net.ipv4.ping_group_range"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0 2147483647"</span><span class="p">}</span>
+<span class="p">]}</span>
+</pre></div>
+</div>
+<p>and <code class="docutils literal notranslate"><span class="pre">ping</span></code> works with no capability, non-root, under <code class="docutils literal notranslate"><span class="pre">drop:</span> <span class="pre">ALL</span></code>.</p>
+<p>This lives in the <strong>launcher</strong>, not the Dockerfile — it is a property of the
+pod, not of the image. <code class="docutils literal notranslate"><span class="pre">iputils-ping</span></code> keeps its file capability so the raw path
+still works where capabilities are available.</p>
+<section id="why-it-is-dropped-under-host-network">
+<h3>Why it is dropped under <code class="docutils literal notranslate"><span class="pre">--host-network</span></code><a class="headerlink" href="#why-it-is-dropped-under-host-network" title="Link to this heading">#</a></h3>
+<p>The kubelet <strong>rejects</strong> any pod that sets a namespaced <code class="docutils literal notranslate"><span class="pre">net.*</span></code> sysctl together
+with <code class="docutils literal notranslate"><span class="pre">hostNetwork:</span> <span class="pre">true</span></code>. The two are mutually exclusive at the API level, so
+the launcher silently drops the sysctl in that mode and warns. In host-network
+mode you inherit the node’s <code class="docutils literal notranslate"><span class="pre">ping_group_range</span></code>, which is usually <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">0</span></code>, so ping
+there falls back to needing <code class="docutils literal notranslate"><span class="pre">CAP_NET_RAW</span></code> from the node’s default set.</p>
+</section>
+</section>
+<section id="why-tracepath-and-not-traceroute">
+<h2>Why <code class="docutils literal notranslate"><span class="pre">tracepath</span></code> and not <code class="docutils literal notranslate"><span class="pre">traceroute</span></code><a class="headerlink" href="#why-tracepath-and-not-traceroute" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">tracepath</span></code> sends UDP with an incrementing TTL and reads the errors back via
+<code class="docutils literal notranslate"><span class="pre">IP_RECVERR</span></code>. <strong>No raw socket, no capability, no sysctl.</strong> <code class="docutils literal notranslate"><span class="pre">traceroute</span> <span class="pre">-T</span></code> and
+<code class="docutils literal notranslate"><span class="pre">mtr</span></code> both need <code class="docutils literal notranslate"><span class="pre">CAP_NET_RAW</span></code>.</p>
+<p>That makes <code class="docutils literal notranslate"><span class="pre">tracepath</span></code> the only path-tracing tool that keeps working under the
+restricted PSS, so it is the one the documentation leads with. It reports path
+MTU as a bonus, which catches overlay MTU black holes.</p>
+</section>
+<section id="why-nc-zv-and-not-ping-as-the-headline">
+<h2>Why <code class="docutils literal notranslate"><span class="pre">nc</span> <span class="pre">-zv</span></code> and not <code class="docutils literal notranslate"><span class="pre">ping</span></code> as the headline<a class="headerlink" href="#why-nc-zv-and-not-ping-as-the-headline" title="Link to this heading">#</a></h2>
+<p>CNIs and NetworkPolicies routinely drop ICMP while passing TCP without
+complaint. A failed <code class="docutils literal notranslate"><span class="pre">ping</span></code> is therefore weak evidence, and acting on it sends
+people to investigate a network that is fine. A TCP connect to the port you
+actually care about tests the thing you actually care about.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ping</span></code> is still installed, and still useful, but the docs treat it as
+corroboration rather than proof.</p>
+</section>
+<section id="the-busybox-path-problem">
+<h2>The busybox PATH problem<a class="headerlink" href="#the-busybox-path-problem" title="Link to this heading">#</a></h2>
+<p>The base image runs <code class="docutils literal notranslate"><span class="pre">busybox</span> <span class="pre">--install</span> <span class="pre">-s</span></code>, which scatters applet symlinks for
+<code class="docutils literal notranslate"><span class="pre">nc</span></code>, <code class="docutils literal notranslate"><span class="pre">ping</span></code>, <code class="docutils literal notranslate"><span class="pre">traceroute</span></code>, <code class="docutils literal notranslate"><span class="pre">nslookup</span></code>, <code class="docutils literal notranslate"><span class="pre">ip</span></code> and <code class="docutils literal notranslate"><span class="pre">arping</span></code> across the PATH.
+<strong>busybox’s <code class="docutils literal notranslate"><span class="pre">nc</span></code> has no <code class="docutils literal notranslate"><span class="pre">-z</span></code></strong> — so if it wins the PATH race, the headline
+feature of this image is silently gone.</p>
+<p>The Dockerfile removes the busybox symlinks for exactly those applets where a
+real tool is installed, leaving the rest of busybox intact, and then asserts
+<code class="docutils literal notranslate"><span class="pre">nc</span> <span class="pre">-h</span></code> mentions <code class="docutils literal notranslate"><span class="pre">-z</span></code> at build time. That assertion is the reason the failure
+cannot reach you.</p>
+</section>
+<section id="identity-kubectl-inside-the-pod-is-not-you">
+<h2>Identity: kubectl inside the pod is not you<a class="headerlink" href="#identity-kubectl-inside-the-pod-is-not-you" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">run</span></code> binds the pod to the namespace’s <code class="docutils literal notranslate"><span class="pre">default</span></code> ServiceAccount.
+Inside the pod, kubectl picks up in-cluster config and authenticates as
+<code class="docutils literal notranslate"><span class="pre">system:serviceaccount:&lt;ns&gt;:default</span></code>. Your own credentials stay on your
+workstation.</p>
+<p>Whether that is useful depends on the namespace’s RBAC. At DLS the beamline
+RoleBindings include the <code class="docutils literal notranslate"><span class="pre">default</span></code> ServiceAccount alongside the human users, so
+in-pod <code class="docutils literal notranslate"><span class="pre">kubectl</span></code> has the namespace role and the reads in the how-to guides
+work. Elsewhere it may have nothing, and <code class="docutils literal notranslate"><span class="pre">--service-account</span></code> selects a
+different one.</p>
+<p><strong>Copying your kubeconfig into the pod is an explicit non-goal.</strong> It would
+write a live OIDC token onto a shared node, readable by anyone who can exec
+into the namespace, and it would expire mid-session. If the ServiceAccount
+cannot do what you need, that is RBAC working; use <code class="docutils literal notranslate"><span class="pre">--service-account</span></code>, or run
+the query from your workstation.</p>
+<section id="automountserviceaccounttoken">
+<h3><code class="docutils literal notranslate"><span class="pre">automountServiceAccountToken</span></code><a class="headerlink" href="#automountserviceaccounttoken" title="Link to this heading">#</a></h3>
+<p>The launcher sets <code class="docutils literal notranslate"><span class="pre">automountServiceAccountToken:</span> <span class="pre">true</span></code> on the pod
+unconditionally. Some sites disable automount on the <code class="docutils literal notranslate"><span class="pre">default</span></code> ServiceAccount,
+which would give the pod the RBAC but no token to authenticate with. The
+<strong>pod-level</strong> field overrides the ServiceAccount’s, so setting it here works
+either way and avoids hard-coding site-specific ServiceAccount names.</p>
+</section>
+</section>
+<section id="hostnetwork-implies-a-dns-policy">
+<h2><code class="docutils literal notranslate"><span class="pre">hostNetwork</span></code> implies a DNS policy<a class="headerlink" href="#hostnetwork-implies-a-dns-policy" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">--host-network</span></code> also sets <code class="docutils literal notranslate"><span class="pre">dnsPolicy:</span> <span class="pre">ClusterFirstWithHostNet</span></code>. Without it the
+pod inherits the node’s <code class="docutils literal notranslate"><span class="pre">/etc/resolv.conf</span></code>, cluster DNS disappears, and every
+<code class="docutils literal notranslate"><span class="pre">svc.cluster.local</span></code> lookup fails — which looks exactly like the bug you are
+hunting. It is never correct to set one without the other.</p>
+</section>
+<section id="what-keep-means">
+<h2>What <code class="docutils literal notranslate"><span class="pre">--keep</span></code> means<a class="headerlink" href="#what-keep-means" title="Link to this heading">#</a></h2>
+<p>Plain <code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">run</span> <span class="pre">-ti</span></code> with a shell as PID 1 does not survive you exiting the
+shell, so “keep” would not keep. Instead <code class="docutils literal notranslate"><span class="pre">--keep</span></code> creates the pod detached
+running <code class="docutils literal notranslate"><span class="pre">sleep</span> <span class="pre">infinity</span></code>, then execs a shell into it. Exiting leaves the pod
+alive, several shells can share it, and re-running <code class="docutils literal notranslate"><span class="pre">netshoot</span></code> attaches to the
+existing pod rather than replacing it.</p>
+<p>Without <code class="docutils literal notranslate"><span class="pre">--keep</span></code> the pod is created with <code class="docutils literal notranslate"><span class="pre">--rm</span></code> and dies with your session —
+and any pod left behind by a dropped terminal is deleted first, so a broken
+connection never blocks the next run.</p>
+</section>
+<section id="running-as-root">
+<h2>Running as root<a class="headerlink" href="#running-as-root" title="Link to this heading">#</a></h2>
+<p>The pod runs as root on purpose. <code class="docutils literal notranslate"><span class="pre">tcpdump</span></code> needs it, and being able to
+<code class="docutils literal notranslate"><span class="pre">apt</span> <span class="pre">install</span></code> something unanticipated halfway through an incident is a large
+part of why this is a full image rather than a minimal one.</p>
+<p>This is the first thing that breaks if these namespaces are ever labelled
+<code class="docutils literal notranslate"><span class="pre">restricted</span></code>. Most of the tooling would survive — that is what the
+capability-free tier is for — but root would not.</p>
+</section>
+<section id="rejected">
+<h2>Rejected<a class="headerlink" href="#rejected" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><strong>A slim variant.</strong> One image, one thing to reason about. Revisit only if
+pull latency actually bites.</p></li>
+<li><p><strong>A Helm chart.</strong> This is never deployed; it is <code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">run</span></code>-ed.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">nmap</span></code>.</strong> See <code class="docutils literal notranslate"><span class="pre">../how-to/reach-a-device</span></code>.</p></li>
+<li><p><strong>Tests and a <code class="docutils literal notranslate"><span class="pre">:edge</span></code> tag.</strong> The Dockerfile’s build-time assertions cover the
+two claims that could break silently. Everything else is better learned by
+using it.</p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../explanations.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Explanations</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="decisions.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Architectural Decision Records</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#why-not-just-use-netshoot">Why not just use netshoot?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#why-not-kubectl-debug">Why not <code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">debug</span></code>?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#making-ping-work-without-privilege">Making ping work without privilege</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-it-is-dropped-under-host-network">Why it is dropped under <code class="docutils literal notranslate"><span class="pre">--host-network</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#why-tracepath-and-not-traceroute">Why <code class="docutils literal notranslate"><span class="pre">tracepath</span></code> and not <code class="docutils literal notranslate"><span class="pre">traceroute</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#why-nc-zv-and-not-ping-as-the-headline">Why <code class="docutils literal notranslate"><span class="pre">nc</span> <span class="pre">-zv</span></code> and not <code class="docutils literal notranslate"><span class="pre">ping</span></code> as the headline</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-busybox-path-problem">The busybox PATH problem</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#identity-kubectl-inside-the-pod-is-not-you">Identity: kubectl inside the pod is not you</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#automountserviceaccounttoken"><code class="docutils literal notranslate"><span class="pre">automountServiceAccountToken</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hostnetwork-implies-a-dns-policy"><code class="docutils literal notranslate"><span class="pre">hostNetwork</span></code> implies a DNS policy</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-keep-means">What <code class="docutils literal notranslate"><span class="pre">--keep</span></code> means</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-as-root">Running as root</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rejected">Rejected</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/epics-containers/ec-netshoot/edit/0e9be9b/docs/explanations/design.md">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../_sources/explanations/design.md.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.21.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
