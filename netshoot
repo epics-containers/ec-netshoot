@@ -37,7 +37,7 @@ Options:
   -n, --namespace NS      namespace (default: current context)
       --node NAME         pin to a node, verbatim (bypasses the scheduler,
                           and therefore also bypasses taints)
-      --host-network      use the node's network stack instead of the pod's.
+  -h, --host-network      use the node's network stack instead of the pod's.
                           Also sets dnsPolicy=ClusterFirstWithHostNet, and
                           disables the ping sysctl (the kubelet forbids the
                           combination). Needed for EPICS CA/PVA broadcast.
@@ -56,7 +56,7 @@ Options:
       --print             print the pod manifest and exit; no cluster changes
       --no-sysctl         omit the net.ipv4.ping_group_range sysctl, for
                           namespaces whose admission policy rejects sysctls
-  -h, --help              this message
+      --help, -?          this message (note: -h is --host-network)
 
 Examples:
   netshoot -n i07-beamline                      # a shell in the namespace
@@ -72,7 +72,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         -n|--namespace)      namespace=${2:?--namespace needs a value}; shift 2 ;;
         --node)              node=${2:?--node needs a value}; shift 2 ;;
-        --host-network)      host_network=true; shift ;;
+        -h|--host-network)   host_network=true; shift ;;
         -k|--keep)           keep=true; shift ;;
         --delete)            delete=true; shift ;;
         --name)              name=${2:?--name needs a value}; shift 2 ;;
@@ -83,7 +83,7 @@ while [[ $# -gt 0 ]]; do
         -c|--command)        command_arg=${2:?--command needs a value}; shift 2 ;;
         --print)             print=true; shift ;;
         --no-sysctl)         sysctl=false; shift ;;
-        -h|--help)           usage | sed -e "s#IMAGE_DEFAULT_DOC#${IMAGE_DEFAULT}#" \
+        --help|-\?)          usage | sed -e "s#IMAGE_DEFAULT_DOC#${IMAGE_DEFAULT}#" \
                                          -e "s#VERSION_DEFAULT_DOC#${VERSION_DEFAULT}#"; exit 0 ;;
         *)                   die "unknown option '$1' (try --help)" ;;
     esac

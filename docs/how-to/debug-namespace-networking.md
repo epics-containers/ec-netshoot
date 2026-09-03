@@ -62,6 +62,7 @@ name; check for a typo or the wrong namespace before going further.
 
 ```bash
 kubectl get endpointslices -l kubernetes.io/service-name=my-ioc
+k get endpointslices -l kubernetes.io/service-name=my-ioc        # k = kubectl
 ```
 
 **An empty endpoint list is the single most common cause of "the network is

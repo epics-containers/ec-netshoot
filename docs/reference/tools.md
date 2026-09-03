@@ -22,7 +22,7 @@ under any Pod Security Standard and in clusters that drop `CAP_NET_RAW`.
 | `openssl` | `s_client` for TLS handshakes and certificates |
 | `jq` | Reading `kubectl -o json` |
 | `getcap` / `capsh` | Checking what this pod is actually permitted to do |
-| `kubectl` | The API server's view, as the pod's ServiceAccount |
+| `kubectl` (also `k`) | The API server's view, as the pod's ServiceAccount |
 | `iperf3` | Throughput, with a netshoot at each end |
 | `curl`, `wget`, `ssh` | From the base image |
 

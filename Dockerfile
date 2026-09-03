@@ -89,6 +89,10 @@ RUN arch="$(dpkg --print-architecture)" && \
     chmod +x /usr/local/bin/kubectl && \
     echo "kubectl ${version}" > /etc/ec-netshoot-versions
 
+# `k` as a shortcut. A symlink rather than a shell alias, so it also works
+# non-interactively - netshoot -c 'k get pods' and anything scripted.
+RUN ln -s /usr/local/bin/kubectl /usr/local/bin/k
+
 # Strip file capabilities from every binary under /usr.
 #
 # Ubuntu ships /usr/bin/ping with cap_net_raw+ep. The *effective* bit in that
@@ -116,6 +120,6 @@ RUN getcap -r /usr 2>/dev/null | cut -d' ' -f1 | xargs -r -n1 setcap -r
 # things that would otherwise break silently and only show up mid-incident.
 RUN nc -h 2>&1 | grep -q -- '-z' || { echo "FATAL: nc has no -z; busybox won the PATH race" >&2; exit 1; } && \
     [ -z "$(getcap -r /usr 2>/dev/null)" ] || { echo "FATAL: file capabilities remain: $(getcap -r /usr 2>/dev/null)" >&2; exit 1; } && \
-    for tool in nslookup host dig ss socat tracepath traceroute iperf3 openssl jq kubectl caget pvxget; do \
+    for tool in nslookup host dig ss socat tracepath traceroute iperf3 openssl jq kubectl k caget pvxget; do \
         command -v "${tool}" >/dev/null || { echo "FATAL: ${tool} missing" >&2; exit 1; }; \
     done

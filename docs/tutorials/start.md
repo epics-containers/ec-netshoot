@@ -50,6 +50,7 @@ nslookup my-ioc                     # does the name resolve, and to what
 ss -tulpn                           # what is listening in here
 tracepath my-ioc                    # where the path goes, and the MTU
 kubectl get pods                    # as the pod's ServiceAccount, not as you
+k get pods                          # k is a symlink to kubectl
 ```
 
 ## One-shot

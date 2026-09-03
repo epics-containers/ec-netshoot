@@ -8,7 +8,7 @@ The page to paste from at 2am.
 netshoot -n i07-beamline                        # shell in the namespace
 netshoot -c 'nc -zv my-ioc 5064'                # one-shot, then exit
 netshoot -n i07-beamline --node bl07i-node1     # pinned to a node
-netshoot --host-network                         # the node's network stack
+netshoot -h                                     # --host-network: the node's stack
 netshoot -k                                     # leave it running
 netshoot --delete                               # tear down a kept pod
 netshoot --print                                # show the manifest, change nothing
@@ -20,11 +20,11 @@ netshoot --print                                # show the manifest, change noth
 cat /etc/resolv.conf                                       # search path, ndots
 nslookup my-ioc                                            # does the name resolve
 dig SRV _pva._tcp.my-ioc.NS.svc.cluster.local              # when you need a record type
-kubectl get endpointslices -l kubernetes.io/service-name=my-ioc   # any endpoints?
+k get endpointslices -l kubernetes.io/service-name=my-ioc   # any endpoints? (k = kubectl)
 nc -zv my-ioc 5064                                         # via the Service
 nc -zv 10.42.1.37 5064                                     # direct to a pod
 ss -tulpn                                                  # what is listening here
-kubectl get networkpolicy                                  # anything dropping it
+k get networkpolicy                                        # anything dropping it
 tracepath my-ioc                                           # where does it stop, and MTU
 ```
 
