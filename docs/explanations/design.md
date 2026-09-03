@@ -74,9 +74,6 @@ Note the difference from a socket failure, which reads
 `ping: socket: Operation not permitted`. One is the shell failing to launch the
 program; the other is the program failing to work. They need different fixes.
 
-Ubuntu ships the same `+ep` on `/usr/bin/arping` and `/usr/sbin/mtr-packet`, so
-all three fail identically.
-
 The image therefore **strips file capabilities from every binary under `/usr`**
 and asserts at build time that none remain. Nothing is lost by this: a process
 that holds `CAP_NET_RAW` in its effective set — which root does whenever the
@@ -95,15 +92,16 @@ the launcher silently drops the sysctl in that mode and warns. In host-network
 mode you inherit the node's `ping_group_range`, which is usually `1 0`, so ping
 there falls back to needing `CAP_NET_RAW` from the node's default set.
 
-## Why `tracepath` and not `traceroute`
+## Why `tracepath` leads
 
 `tracepath` sends UDP with an incrementing TTL and reads the errors back via
-`IP_RECVERR`. **No raw socket, no capability, no sysctl.** `traceroute -T` and
-`mtr` both need `CAP_NET_RAW`.
+`IP_RECVERR`. **No raw socket, no capability, no sysctl.** Linux `traceroute`
+uses the same trick for its default UDP method, so it works too; only its `-I`
+and `-T` modes need a raw socket.
 
-That makes `tracepath` the only path-tracing tool that keeps working under the
-restricted PSS, so it is the one the documentation leads with. It reports path
-MTU as a bonus, which catches overlay MTU black holes.
+That makes both usable under the restricted PSS and in clusters that drop
+`CAP_NET_RAW`, and it is why `tracepath` — which also reports path MTU, catching
+overlay MTU black holes — is the one the documentation leads with.
 
 ## Why `nc -zv` and not `ping` as the headline
 
@@ -118,7 +116,7 @@ corroboration rather than proof.
 ## The busybox PATH problem
 
 The base image runs `busybox --install -s`, which scatters applet symlinks for
-`nc`, `ping`, `traceroute`, `nslookup`, `ip` and `arping` across the PATH.
+`nc`, `ping`, `traceroute`, `nslookup` and `ip` across the PATH.
 **busybox's `nc` has no `-z`** — so if it wins the PATH race, the headline
 feature of this image is silently gone.
 
@@ -175,13 +173,13 @@ connection never blocks the next run.
 
 ## Running as root
 
-The pod runs as root on purpose. `tcpdump` needs it, and being able to
-`apt install` something unanticipated halfway through an incident is a large
-part of why this is a full image rather than a minimal one.
+The pod runs as root on purpose: being able to `apt install` something
+unanticipated halfway through an incident is a large part of why this is a full
+image rather than a minimal one.
 
-This is the first thing that breaks if these namespaces are ever labelled
-`restricted`. Most of the tooling would survive — that is what the
-capability-free tier is for — but root would not.
+Root is the first thing that breaks if these namespaces are ever labelled
+`restricted`. Everything else would survive — every tool in the image works
+with no capability at all.
 
 ## Rejected
 
