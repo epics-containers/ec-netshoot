@@ -4,7 +4,20 @@ A real session on beamline I07, annotated. Other facilities should be able to
 follow the same shape with their own service names — the only DLS-specific
 parts are the `module load` and the gateway service.
 
-## Set the context
+## Install the launcher (once)
+
+```bash
+mkdir -p $HOME/bin
+cd $HOME/bin
+curl -O https://raw.githubusercontent.com/epics-containers/ec-netshoot/main/netshoot
+chmod +x netshoot
+```
+
+`$HOME/bin` is on your PATH in any new shell, though not the one you are in.
+The launcher needs nothing but `kubectl`, and it is a single bash script — the
+`curl` above is the whole installation.
+
+## Set the context (each session)
 
 ```bash
 module load ec/i07
