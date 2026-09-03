@@ -14,7 +14,7 @@ chmod +x netshoot
 |---|---|---|
 | `-n`, `--namespace NS` | current context | Resolved and echoed before the pod is created |
 | `--node NAME` | none | Verbatim. Sets `nodeName`, bypassing the scheduler and therefore taints |
-| `--host-network` | false | Also sets `dnsPolicy: ClusterFirstWithHostNet`; disables the ping sysctl |
+| `-h`, `--host-network` | false | Also sets `dnsPolicy: ClusterFirstWithHostNet`; disables the ping sysctl. **Note `-h` is not help** — use `--help` or `-?` |
 | `-k`, `--keep` | false | Pod survives your session; re-running attaches to it |
 | `--delete` | — | Delete the pod and exit |
 | `--name NAME` | `netshoot-$USER` | Sanitised to a valid RFC1123 label. Lets you run two at once |

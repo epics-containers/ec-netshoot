@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Tools &#8212; ec-netshoot 0.1.0-2-ge043ccf documentation</title>
+    <title>Tools &#8212; ec-netshoot 0.1.1 documentation</title>
   
   
   
@@ -40,7 +40,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
 
-    <script src="../_static/documentation_options.js?v=7cba4f69"></script>
+    <script src="../_static/documentation_options.js?v=a58bc63e"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -50,7 +50,7 @@
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.21.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://epics-containers.github.io/ec-netshoot/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.1.0-2-ge043ccf';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.1.1';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -60,7 +60,7 @@
     <link rel="prev" title="Launcher Reference" href="launcher.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.0-2-ge043ccf" />
+  <meta name="docsearch:version" content="0.1.1" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -473,41 +473,53 @@ under any Pod Security Standard and in clusters that drop <code class="docutils 
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">socat</span></code></p></td>
 <td><p>Relays, UDP probes, unix sockets, ad-hoc listeners</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">dig</span></code>, <code class="docutils literal notranslate"><span class="pre">host</span></code></p></td>
-<td><p>Cluster DNS and upstream resolution</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">nslookup</span></code>, <code class="docutils literal notranslate"><span class="pre">host</span></code></p></td>
+<td><p>Cluster DNS — <strong>both honour the search path</strong>, so <code class="docutils literal notranslate"><span class="pre">nslookup</span> <span class="pre">my-ioc</span></code> works</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ss</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dig</span></code></p></td>
+<td><p>When you need a record type, a specific server, or TTLs. Note <code class="docutils literal notranslate"><span class="pre">dig</span></code> ignores the search path unless given <code class="docutils literal notranslate"><span class="pre">+search</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ss</span></code></p></td>
 <td><p>What is listening and what is connected</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ip</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ip</span></code></p></td>
 <td><p>Interfaces, addresses, routes</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">tracepath</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">tracepath</span></code></p></td>
 <td><p>Path tracing <strong>and path MTU</strong>, with no raw socket</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ping</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ping</span></code></p></td>
 <td><p>ICMP echo, via an unprivileged <code class="docutils literal notranslate"><span class="pre">SOCK_DGRAM</span></code> socket. Weak evidence — CNIs often drop ICMP but pass TCP</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">traceroute</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">traceroute</span></code></p></td>
 <td><p>Path tracing. Default UDP method uses <code class="docutils literal notranslate"><span class="pre">IP_RECVERR</span></code>, so no raw socket</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">openssl</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">openssl</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">s_client</span></code> for TLS handshakes and certificates</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">jq</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">jq</span></code></p></td>
 <td><p>Reading <code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">-o</span> <span class="pre">json</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">getcap</span></code> / <code class="docutils literal notranslate"><span class="pre">capsh</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">getcap</span></code> / <code class="docutils literal notranslate"><span class="pre">capsh</span></code></p></td>
 <td><p>Checking what this pod is actually permitted to do</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">kubectl</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">kubectl</span></code> (also <code class="docutils literal notranslate"><span class="pre">k</span></code>)</p></td>
 <td><p>The API server’s view, as the pod’s ServiceAccount</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">iperf3</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">iperf3</span></code></p></td>
 <td><p>Throughput, with a netshoot at each end</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">curl</span></code>, <code class="docutils literal notranslate"><span class="pre">wget</span></code>, <code class="docutils literal notranslate"><span class="pre">ssh</span></code></p></td>
-<td><p>From the base image</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">lsusb</span></code></p></td>
+<td><p>USB devices, when a node annotation has exposed <code class="docutils literal notranslate"><span class="pre">/dev/bus/usb</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">curl</span></code></p></td>
+<td><p>HTTP checks against services and LoadBalancers</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">less</span></code>, <code class="docutils literal notranslate"><span class="pre">ps</span></code></p></td>
+<td><p>Paging kubectl output; process list</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">caget</span></code>, <code class="docutils literal notranslate"><span class="pre">pvxget</span></code>, …</p></td>
+<td><p>See below</p></td>
 </tr>
 </tbody>
 </table>
@@ -549,6 +561,10 @@ incident. Capture at the other end instead: on the device, on the node, or in
 a pod that does hold the capability.</p></li>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">net-tools</span></code></strong> — busybox’s <code class="docutils literal notranslate"><span class="pre">netstat</span></code> and <code class="docutils literal notranslate"><span class="pre">ifconfig</span></code> remain available; <code class="docutils literal notranslate"><span class="pre">ss</span></code>
 and <code class="docutils literal notranslate"><span class="pre">ip</span></code> are better.</p></li>
+<li><p><strong>A developer toolchain</strong> — no <code class="docutils literal notranslate"><span class="pre">git</span></code>, <code class="docutils literal notranslate"><span class="pre">gh</span></code>, <code class="docutils literal notranslate"><span class="pre">ssh</span></code>, <code class="docutils literal notranslate"><span class="pre">gdb</span></code>, <code class="docutils literal notranslate"><span class="pre">npm</span></code> or compilers.
+The image is built on <code class="docutils literal notranslate"><span class="pre">epics-base-runtime</span></code> rather than the developer image,
+which is what takes it from 465 MB to roughly 70 MB. See
+<code class="docutils literal notranslate"><span class="pre">../explanations/decisions/0003-base-on-epics-base-runtime</span></code>.</p></li>
 </ul>
 <p><code class="docutils literal notranslate"><span class="pre">apt</span></code> works and the pod has egress, so anything missing is one command away.
 If you find yourself installing the same thing twice, open an issue.</p>
@@ -603,7 +619,7 @@ If you find yourself installing the same thing twice, open an issue.</p>
 
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/epics-containers/ec-netshoot/edit/0.1.0-2-ge043ccf/docs/reference/tools.md">
+    <a href="https://github.com/epics-containers/ec-netshoot/edit/0.1.1/docs/reference/tools.md">
       <i class="fa-solid fa-pencil"></i>
       
       

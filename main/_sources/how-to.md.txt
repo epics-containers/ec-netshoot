@@ -5,5 +5,6 @@
 
 how-to/debug-namespace-networking
 how-to/reach-a-device
+how-to/dls-worked-example
 how-to/contribute
 ```

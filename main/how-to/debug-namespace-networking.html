@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Debug Networking Inside a Namespace &#8212; ec-netshoot 0.1.0-2-ge043ccf documentation</title>
+    <title>Debug Networking Inside a Namespace &#8212; ec-netshoot 0.1.1 documentation</title>
   
   
   
@@ -40,7 +40,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
 
-    <script src="../_static/documentation_options.js?v=7cba4f69"></script>
+    <script src="../_static/documentation_options.js?v=a58bc63e"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -50,7 +50,7 @@
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.21.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://epics-containers.github.io/ec-netshoot/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.1.0-2-ge043ccf';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.1.1';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -61,7 +61,7 @@
     <link rel="prev" title="How-to Guides" href="../how-to.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.0-2-ge043ccf" />
+  <meta name="docsearch:version" content="0.1.1" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -392,6 +392,7 @@
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Debug Networking Inside a Namespace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reach-a-device.html">Reach a Device From a Namespace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dls-worked-example.html">A Worked Session (Diamond Light Source)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contribute.html">Contribute</a></li>
 </ul>
 </div>
@@ -483,8 +484,19 @@ is a good way to prove that is what is happening.</p></li>
 </section>
 <section id="does-the-name-resolve">
 <h2>1. Does the name resolve?<a class="headerlink" href="#does-the-name-resolve" title="Link to this heading">#</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dig<span class="w"> </span>+search<span class="w"> </span>my-ioc
-dig<span class="w"> </span>my-ioc.i07-beamline.svc.cluster.local
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>nslookup<span class="w"> </span>my-ioc
+host<span class="w"> </span>my-ioc<span class="w">                                   </span><span class="c1"># same answer, one line</span>
+</pre></div>
+</div>
+<p>Use <code class="docutils literal notranslate"><span class="pre">nslookup</span></code>, not <code class="docutils literal notranslate"><span class="pre">dig</span></code>. <strong><code class="docutils literal notranslate"><span class="pre">dig</span> <span class="pre">my-ioc</span></code> does not use the search path</strong> — it
+queries that name literally, returns NXDOMAIN, and looks exactly like the
+service not existing. You would need <code class="docutils literal notranslate"><span class="pre">dig</span> <span class="pre">+search</span> <span class="pre">my-ioc</span></code>. <code class="docutils literal notranslate"><span class="pre">nslookup</span></code> and <code class="docutils literal notranslate"><span class="pre">host</span></code>
+honour the search path by default, and their output is five lines rather than
+twenty.</p>
+<p><code class="docutils literal notranslate"><span class="pre">dig</span></code> is still the right tool when you need a specific record type, want to
+bypass the resolver, or care about TTLs:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dig<span class="w"> </span>SRV<span class="w"> </span>_pva._tcp.my-ioc.i07-beamline.svc.cluster.local
+dig<span class="w"> </span>@10.43.0.10<span class="w"> </span>my-ioc.i07-beamline.svc.cluster.local<span class="w">   </span><span class="c1"># ask cluster DNS directly</span>
 </pre></div>
 </div>
 <p>A ClusterIP Service resolves to its virtual IP. A <strong>headless</strong> Service
@@ -496,6 +508,7 @@ name; check for a typo or the wrong namespace before going further.</p>
 <section id="are-there-any-endpoints">
 <h2>2. Are there any endpoints?<a class="headerlink" href="#are-there-any-endpoints" title="Link to this heading">#</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl<span class="w"> </span>get<span class="w"> </span>endpointslices<span class="w"> </span>-l<span class="w"> </span>kubernetes.io/service-name<span class="o">=</span>my-ioc
+k<span class="w"> </span>get<span class="w"> </span>endpointslices<span class="w"> </span>-l<span class="w"> </span>kubernetes.io/service-name<span class="o">=</span>my-ioc<span class="w">        </span><span class="c1"># k = kubectl</span>
 </pre></div>
 </div>
 <p><strong>An empty endpoint list is the single most common cause of “the network is
@@ -544,6 +557,15 @@ nc<span class="w"> </span>-zv<span class="w"> </span><span class="m">10</span>.4
 </tr>
 </tbody>
 </table>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><strong>Do not ping a Service.</strong> A ClusterIP is a virtual address: kube-proxy rewrites
+traffic to the service’s declared <em>ports</em> and nothing else. ICMP has no port, so
+the packet is never rewritten, leaves the cluster with an address nothing claims,
+and a site router eventually answers <code class="docutils literal notranslate"><span class="pre">Destination</span> <span class="pre">Host</span> <span class="pre">Unreachable</span></code> — from
+somewhere with no connection to your problem at all. A healthy Service fails this
+test every time. See <code class="docutils literal notranslate"><span class="pre">dls-worked-example</span></code> for what that looks like.</p>
 </div>
 <p>Note the failure <em>mode</em>, not just the failure. <strong>Connection refused</strong> means a
 packet reached a host that actively said no — the path is fine, the port is
@@ -609,9 +631,6 @@ settle almost everything without it.</p>
 </section>
 <section id="epics-services">
 <h2>EPICS services<a class="headerlink" href="#epics-services" title="Link to this heading">#</a></h2>
-<p>Mostly this behaves the same from a netshoot pod as it does from your
-workstation, so this is rarely the reason to reach for this tool. The parts
-that are specific:</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>Protocol</p></th>
@@ -631,24 +650,34 @@ that are specific:</p>
 </tbody>
 </table>
 </div>
-<p>With default EPICS settings, <strong>name search is a UDP broadcast</strong>, and broadcast
-does not cross the pod network. IOCs at DLS run with <code class="docutils literal notranslate"><span class="pre">hostNetwork:</span> <span class="pre">true</span></code> for
-exactly this reason, so to search for PVs the same way an IOC does you need:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>netshoot<span class="w"> </span>-n<span class="w"> </span>i07-beamline<span class="w"> </span>--host-network
-caget<span class="w"> </span>MY:PV:NAME
+<p>With default EPICS settings <strong>name search is a UDP broadcast</strong>, and broadcast
+does not cross the pod network. So a plain <code class="docutils literal notranslate"><span class="pre">caget</span></code> from a netshoot pod finds
+nothing, even when the IOC is healthy and one namespace away. There are three
+ways round it, in the order you should try them.</p>
+<p><strong>1. A CA/PVA gateway service.</strong> Usually the right answer, and what services in
+the cluster already use. The gateway accepts the unicast search a pod can do:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">EPICS_CA_ADDR_LIST</span><span class="o">=</span>&lt;gateway-service&gt;:&lt;ca-port&gt;
+caget<span class="w"> </span>MY:PV
+<span class="nb">export</span><span class="w"> </span><span class="nv">EPICS_PVA_NAME_SERVERS</span><span class="o">=</span>&lt;gateway-service&gt;:&lt;pva-port&gt;
+pvxget<span class="w"> </span>MY:PV
 </pre></div>
 </div>
-<p>Without <code class="docutils literal notranslate"><span class="pre">--host-network</span></code> you can still talk to a PV if you skip the broadcast
-and address the server directly:</p>
+<p><code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">get</span> <span class="pre">svc</span></code> shows the gateway and its ports. See <code class="docutils literal notranslate"><span class="pre">dls-worked-example</span></code> for
+a real one.</p>
+<p><strong>2. Address one IOC directly</strong>, skipping search entirely:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">EPICS_CA_AUTO_ADDR_LIST</span><span class="o">=</span>NO<span class="w"> </span><span class="nv">EPICS_CA_ADDR_LIST</span><span class="o">=</span>my-ioc.i07-beamline.svc<span class="w"> </span>caget<span class="w"> </span>MY:PV
 <span class="nv">EPICS_PVA_NAME_SERVERS</span><span class="o">=</span>my-ioc.i07-beamline.svc:5075<span class="w"> </span>pvxget<span class="w"> </span>MY:PV
 </pre></div>
 </div>
-<p>That distinction matters when triaging: <strong>a <code class="docutils literal notranslate"><span class="pre">caget</span></code> timeout is far more often
-an address-list problem than a network fault.</strong> Prove the transport separately
-before blaming the network:</p>
+<p><strong>3. <code class="docutils literal notranslate"><span class="pre">netshoot</span> <span class="pre">-h</span></code></strong> puts you on the node’s network stack, where broadcast
+search works the way an IOC does it. Useful for reproducing an IOC’s exact
+view — but at that point you are testing roughly what a workstation tests.</p>
+<p>Whichever route, the triage point is the same: <strong>a <code class="docutils literal notranslate"><span class="pre">caget</span></code> timeout is far more
+often an address-list problem than a network fault.</strong> Prove the transport
+separately before blaming the network:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>nc<span class="w"> </span>-zv<span class="w"> </span>my-ioc<span class="w"> </span><span class="m">5064</span><span class="w">          </span><span class="c1"># is the CA TCP port reachable at all?</span>
 cainfo<span class="w"> </span>MY:PV<span class="w">                </span><span class="c1"># which server actually answered?</span>
+caget<span class="w"> </span>-w5<span class="w"> </span>MY:PV<span class="w">             </span><span class="c1"># bounded timeout instead of a hang</span>
 <span class="nv">PVXS_LOG</span><span class="o">=</span><span class="s1">'*=DEBUG'</span><span class="w"> </span>pvxget<span class="w"> </span>MY:PV
 </pre></div>
 </div>
@@ -718,7 +747,7 @@ cainfo<span class="w"> </span>MY:PV<span class="w">                </span><span 
 
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/epics-containers/ec-netshoot/edit/0.1.0-2-ge043ccf/docs/how-to/debug-namespace-networking.md">
+    <a href="https://github.com/epics-containers/ec-netshoot/edit/0.1.1/docs/how-to/debug-namespace-networking.md">
       <i class="fa-solid fa-pencil"></i>
       
       

@@ -174,8 +174,10 @@ connection never blocks the next run.
 ## Running as root
 
 The pod runs as root on purpose: being able to `apt install` something
-unanticipated halfway through an incident is a large part of why this is a full
-image rather than a minimal one.
+unanticipated halfway through an incident matters more than the principle, and
+packet-adjacent tools generally want it. The image is small (see
+`decisions/0003-base-on-epics-base-runtime`) but not minimal, precisely so that
+escape hatch exists.
 
 Root is the first thing that breaks if these namespaces are ever labelled
 `restricted`. Everything else would survive — every tool in the image works
@@ -183,10 +185,16 @@ with no capability at all.
 
 ## Rejected
 
-- **A slim variant.** One image, one thing to reason about. Revisit only if
-  pull latency actually bites.
+- **A slim variant.** Pull latency did bite, so rather than publish two images
+  the single image was made small — `epics-base-runtime` instead of the
+  developer image, 465 MB down to roughly 70 MB. See
+  `decisions/0003-base-on-epics-base-runtime`.
+- **Hand-copying EPICS binaries into `ubuntu:noble`.** `caget` and `pvxget` are
+  dynamically linked against `libca`, `libCom`, `libpvxs` and `libevent_core`,
+  so this means chasing shared libraries and re-chasing them on every base
+  bump. `epics-base-runtime` is that job already done, upstream.
 - **A Helm chart.** This is never deployed; it is `kubectl run`-ed.
 - **`nmap`.** See `../how-to/reach-a-device`.
 - **Tests and a `:edge` tag.** The Dockerfile's build-time assertions cover the
-  two claims that could break silently. Everything else is better learned by
+  claims that could break silently. Everything else is better learned by
   using it.
