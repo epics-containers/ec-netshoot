@@ -38,6 +38,8 @@ tcpdump -nni any host X and port Y -w /tmp/c.pcap          # last resort
 | Works on pod IP, not Service | kube-proxy or the endpoint list |
 | Works with `--host-network`, not without | Cluster is in the way — suspect masquerade |
 | Large writes hang, small ones fine | Path MTU black hole (`tracepath` reports it) |
+| `bash: /usr/bin/X: Operation not permitted` | The *shell* cannot launch it — a file-capability/NoNewPrivs clash, not a network fault |
+| `X: socket: Operation not permitted` | The program ran but was denied a raw socket — the pod lacks `CAP_NET_RAW` |
 
 ## Ports
 

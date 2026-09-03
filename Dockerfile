@@ -86,16 +86,34 @@ RUN arch="$(dpkg --print-architecture)" && \
     chmod +x /usr/local/bin/kubectl && \
     echo "kubectl ${version}" > /etc/ec-netshoot-versions
 
-# Ubuntu ships /usr/bin/ping with the cap_net_raw file capability rather than
-# setuid. BuildKit preserves the security.capability xattr, but assert it
-# rather than discover at 2am that a base image change dropped it.
+# Strip file capabilities from every binary in the image.
 #
-# This block plus the next are build-time assertions, not a test suite. They
-# cost nothing and they guard the two things that would otherwise break
-# silently. Delete them if you disagree.
-RUN getcap /usr/bin/ping | grep -q cap_net_raw || setcap cap_net_raw+ep /usr/bin/ping
+# Ubuntu ships /usr/bin/ping, /usr/bin/arping and /usr/sbin/mtr-packet with
+# cap_net_raw+ep. The *effective* bit in that "+ep" means execve fails outright
+# with EPERM whenever the kernel cannot grant the process the capability -
+# which is the case any time the pod drops capabilities or sets
+# allowPrivilegeEscalation: false (NoNewPrivs). The symptom is
+#
+#     bash: /usr/bin/ping: Operation not permitted
+#
+# before the program has run at all, so no amount of sysctl helps.
+#
+# With no file capability these exec everywhere and pick their socket at
+# runtime:
+#   - as root with CAP_NET_RAW in the effective set they open a raw socket from
+#     their process capabilities; the file capability was adding nothing
+#   - otherwise ping falls back to an unprivileged SOCK_DGRAM ICMP socket, which
+#     the launcher's net.ipv4.ping_group_range sysctl enables
+#
+# Sweeping the whole filesystem rather than naming binaries, so a future
+# package that ships fcaps cannot reintroduce the failure.
+# See docs/explanations/design.md.
+RUN getcap -r /usr 2>/dev/null | cut -d' ' -f1 | xargs -r setcap -r
 
+# Build-time assertions, not a test suite. They cost nothing and they guard the
+# three things that would otherwise break silently and only show up mid-incident.
 RUN nc -h 2>&1 | grep -q -- '-z' || { echo "FATAL: nc has no -z; busybox won the PATH race" >&2; exit 1; } && \
+    [ -z "$(getcap -r /usr 2>/dev/null)" ] || { echo "FATAL: file capabilities remain: $(getcap -r /usr 2>/dev/null)" >&2; exit 1; } && \
     for tool in dig ss socat tracepath iperf3 tcpdump openssl jq kubectl caget pvxget; do \
         command -v "${tool}" >/dev/null || { echo "FATAL: ${tool} missing" >&2; exit 1; }; \
     done

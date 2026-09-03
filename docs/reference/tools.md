@@ -25,8 +25,19 @@ Available under any Pod Security Standard, including `restricted`.
 
 ## Best effort — need `CAP_NET_RAW`
 
-Present by default, dropped by the restricted Pod Security Standard. `ping`
-additionally works capability-free when the launcher's sysctl is applied.
+These open raw sockets, so they work only when the pod actually holds
+`CAP_NET_RAW` in its effective set. `ping` additionally works with no
+capability at all when the launcher's `ping_group_range` sysctl is applied,
+which is the default.
+
+:::{note}
+The image strips file capabilities from all of its binaries. Ubuntu ships
+`ping`, `arping` and `mtr-packet` with `cap_net_raw+ep`, and the effective bit
+makes `execve` itself fail with `Operation not permitted` in any pod that drops
+capabilities or sets `allowPrivilegeEscalation: false`. Stripping it costs
+nothing and turns "cannot run at all" into "runs, with whatever privilege the
+pod actually has". See `../explanations/design`.
+:::
 
 | Tool | For |
 |---|---|
