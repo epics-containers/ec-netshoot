@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>A Worked Session (Diamond Light Source) &#8212; ec-netshoot 0.1.1-2-g38f4322 documentation</title>
+    <title>A Worked Session (Diamond Light Source) &#8212; ec-netshoot 0.1.1-3-g4bd7798 documentation</title>
   
   
   
@@ -40,7 +40,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
 
-    <script src="../_static/documentation_options.js?v=c11c1ae4"></script>
+    <script src="../_static/documentation_options.js?v=e9b8a29a"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -50,7 +50,7 @@
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.21.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://epics-containers.github.io/ec-netshoot/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.1.1-2-g38f4322';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.1.1-3-g4bd7798';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -61,7 +61,7 @@
     <link rel="prev" title="Reach a Device From a Namespace" href="reach-a-device.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.1-2-g38f4322" />
+  <meta name="docsearch:version" content="0.1.1-3-g4bd7798" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -543,12 +543,9 @@ of that service’s ports take one command:</p>
 </section>
 <section id="epics-through-the-gateway">
 <h2>EPICS through the gateway<a class="headerlink" href="#epics-through-the-gateway" title="Link to this heading">#</a></h2>
-<p>UPDATE: I’ve found that caget works without using the gateway from this pod
-a surprising result that requires more investigation!</p>
 <p>The pod network has no broadcast, so default CA name search finds nothing. At
 DLS the answer is the gateway service rather than <code class="docutils literal notranslate"><span class="pre">--host-network</span></code>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># it seems you don't actually need this unless you are testing your gateways pod</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">EPICS_CA_ADDR_LIST</span><span class="o">=</span>i07-epics-gateways:9064
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">EPICS_CA_ADDR_LIST</span><span class="o">=</span>i07-epics-gateways:9064
 caget<span class="w"> </span>BL07I-VA-IONP-06:STA
 </pre></div>
 </div>
@@ -663,7 +660,7 @@ netshoot<span class="w"> </span>--node<span class="w"> </span>bl07i-node1<span c
 
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/epics-containers/ec-netshoot/edit/0.1.1-2-g38f4322/docs/how-to/dls-worked-example.md">
+    <a href="https://github.com/epics-containers/ec-netshoot/edit/0.1.1-3-g4bd7798/docs/how-to/dls-worked-example.md">
       <i class="fa-solid fa-pencil"></i>
       
       
