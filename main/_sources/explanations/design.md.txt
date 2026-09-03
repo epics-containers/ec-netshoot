@@ -34,12 +34,9 @@ whose exact view you need; reach for `netshoot` when you need a vantage point.
 
 There are only two ways a process gets ICMP echo on Linux:
 
-1. **`SOCK_RAW`**, which needs `CAP_NET_RAW`. Ubuntu ships `/usr/bin/ping` with
-   the `cap_net_raw+ep` *file* capability rather than setuid. That works in a
-   default pod — but not with `allowPrivilegeEscalation: false`, because that
-   sets `NoNewPrivs`, and **`NoNewPrivs` makes the kernel ignore file
-   capabilities entirely**. It also does not survive `drop: ["ALL"]`. The
-   restricted Pod Security Standard mandates both.
+1. **`SOCK_RAW`**, which needs `CAP_NET_RAW`. Ubuntu ships `/usr/bin/ping`
+   with the `cap_net_raw+ep` *file* capability rather than setuid. That works
+   in a default pod, but see the trap below.
 2. **`SOCK_DGRAM` with `IPPROTO_ICMP`**, which needs **no capability at all**.
    It is gated only on the netns sysctl `net.ipv4.ping_group_range` covering
    the process's GID. Modern `iputils-ping` tries this first and only falls
@@ -58,9 +55,37 @@ So the launcher sets:
 
 and `ping` works with no capability, non-root, under `drop: ALL`.
 
-This lives in the **launcher**, not the Dockerfile — it is a property of the
-pod, not of the image. `iputils-ping` keeps its file capability so the raw path
-still works where capabilities are available.
+### The trap: `+ep` breaks exec, not just the socket
+
+The file capability is not merely useless when capabilities are unavailable —
+it is actively harmful. The **effective** bit in `cap_net_raw+ep` means that if
+the kernel cannot grant the process the capability, `execve` fails outright with
+`EPERM`. You get
+
+```
+bash: /usr/bin/ping: Operation not permitted
+```
+
+before ping has run at all, so the sysctl never gets a chance to help. This
+happens whenever the pod drops capabilities or sets
+`allowPrivilegeEscalation: false` (which sets `NoNewPrivs`).
+
+Note the difference from a socket failure, which reads
+`ping: socket: Operation not permitted`. One is the shell failing to launch the
+program; the other is the program failing to work. They need different fixes.
+
+Ubuntu ships the same `+ep` on `/usr/bin/arping` and `/usr/sbin/mtr-packet`, so
+all three fail identically.
+
+The image therefore **strips file capabilities from every binary under `/usr`**
+and asserts at build time that none remain. Nothing is lost by this: a process
+that holds `CAP_NET_RAW` in its effective set — which root does whenever the
+runtime grants it — opens a raw socket regardless of file capabilities. The
+file capability only ever mattered for unprivileged users, and for those the
+sysctl is the better mechanism anyway.
+
+The sysctl lives in the **launcher**, not the Dockerfile — it is a property of
+the pod, not of the image.
 
 ### Why it is dropped under `--host-network`
 

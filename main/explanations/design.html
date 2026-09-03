@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Design Notes &#8212; ec-netshoot 0e9be9b documentation</title>
+    <title>Design Notes &#8212; ec-netshoot 0.1.0-1-gacda054 documentation</title>
   
   
   
@@ -40,7 +40,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
 
-    <script src="../_static/documentation_options.js?v=77622bff"></script>
+    <script src="../_static/documentation_options.js?v=d8ccb4cc"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -50,7 +50,7 @@
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.21.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://epics-containers.github.io/ec-netshoot/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0e9be9b';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.1.0-1-gacda054';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -61,7 +61,7 @@
     <link rel="prev" title="Explanations" href="../explanations.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0e9be9b" />
+  <meta name="docsearch:version" content="0.1.0-1-gacda054" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -491,12 +491,9 @@ whose exact view you need; reach for <code class="docutils literal notranslate">
 <h2>Making ping work without privilege<a class="headerlink" href="#making-ping-work-without-privilege" title="Link to this heading">#</a></h2>
 <p>There are only two ways a process gets ICMP echo on Linux:</p>
 <ol class="arabic simple">
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">SOCK_RAW</span></code></strong>, which needs <code class="docutils literal notranslate"><span class="pre">CAP_NET_RAW</span></code>. Ubuntu ships <code class="docutils literal notranslate"><span class="pre">/usr/bin/ping</span></code> with
-the <code class="docutils literal notranslate"><span class="pre">cap_net_raw+ep</span></code> <em>file</em> capability rather than setuid. That works in a
-default pod — but not with <code class="docutils literal notranslate"><span class="pre">allowPrivilegeEscalation:</span> <span class="pre">false</span></code>, because that
-sets <code class="docutils literal notranslate"><span class="pre">NoNewPrivs</span></code>, and <strong><code class="docutils literal notranslate"><span class="pre">NoNewPrivs</span></code> makes the kernel ignore file
-capabilities entirely</strong>. It also does not survive <code class="docutils literal notranslate"><span class="pre">drop:</span> <span class="pre">[&quot;ALL&quot;]</span></code>. The
-restricted Pod Security Standard mandates both.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">SOCK_RAW</span></code></strong>, which needs <code class="docutils literal notranslate"><span class="pre">CAP_NET_RAW</span></code>. Ubuntu ships <code class="docutils literal notranslate"><span class="pre">/usr/bin/ping</span></code>
+with the <code class="docutils literal notranslate"><span class="pre">cap_net_raw+ep</span></code> <em>file</em> capability rather than setuid. That works
+in a default pod, but see the trap below.</p></li>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">SOCK_DGRAM</span></code> with <code class="docutils literal notranslate"><span class="pre">IPPROTO_ICMP</span></code></strong>, which needs <strong>no capability at all</strong>.
 It is gated only on the netns sysctl <code class="docutils literal notranslate"><span class="pre">net.ipv4.ping_group_range</span></code> covering
 the process’s GID. Modern <code class="docutils literal notranslate"><span class="pre">iputils-ping</span></code> tries this first and only falls
@@ -512,9 +509,32 @@ So the launcher sets:</p>
 </pre></div>
 </div>
 <p>and <code class="docutils literal notranslate"><span class="pre">ping</span></code> works with no capability, non-root, under <code class="docutils literal notranslate"><span class="pre">drop:</span> <span class="pre">ALL</span></code>.</p>
-<p>This lives in the <strong>launcher</strong>, not the Dockerfile — it is a property of the
-pod, not of the image. <code class="docutils literal notranslate"><span class="pre">iputils-ping</span></code> keeps its file capability so the raw path
-still works where capabilities are available.</p>
+<section id="the-trap-ep-breaks-exec-not-just-the-socket">
+<h3>The trap: <code class="docutils literal notranslate"><span class="pre">+ep</span></code> breaks exec, not just the socket<a class="headerlink" href="#the-trap-ep-breaks-exec-not-just-the-socket" title="Link to this heading">#</a></h3>
+<p>The file capability is not merely useless when capabilities are unavailable —
+it is actively harmful. The <strong>effective</strong> bit in <code class="docutils literal notranslate"><span class="pre">cap_net_raw+ep</span></code> means that if
+the kernel cannot grant the process the capability, <code class="docutils literal notranslate"><span class="pre">execve</span></code> fails outright with
+<code class="docutils literal notranslate"><span class="pre">EPERM</span></code>. You get</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bash</span><span class="p">:</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">ping</span><span class="p">:</span> <span class="n">Operation</span> <span class="ow">not</span> <span class="n">permitted</span>
+</pre></div>
+</div>
+<p>before ping has run at all, so the sysctl never gets a chance to help. This
+happens whenever the pod drops capabilities or sets
+<code class="docutils literal notranslate"><span class="pre">allowPrivilegeEscalation:</span> <span class="pre">false</span></code> (which sets <code class="docutils literal notranslate"><span class="pre">NoNewPrivs</span></code>).</p>
+<p>Note the difference from a socket failure, which reads
+<code class="docutils literal notranslate"><span class="pre">ping:</span> <span class="pre">socket:</span> <span class="pre">Operation</span> <span class="pre">not</span> <span class="pre">permitted</span></code>. One is the shell failing to launch the
+program; the other is the program failing to work. They need different fixes.</p>
+<p>Ubuntu ships the same <code class="docutils literal notranslate"><span class="pre">+ep</span></code> on <code class="docutils literal notranslate"><span class="pre">/usr/bin/arping</span></code> and <code class="docutils literal notranslate"><span class="pre">/usr/sbin/mtr-packet</span></code>, so
+all three fail identically.</p>
+<p>The image therefore <strong>strips file capabilities from every binary under <code class="docutils literal notranslate"><span class="pre">/usr</span></code></strong>
+and asserts at build time that none remain. Nothing is lost by this: a process
+that holds <code class="docutils literal notranslate"><span class="pre">CAP_NET_RAW</span></code> in its effective set — which root does whenever the
+runtime grants it — opens a raw socket regardless of file capabilities. The
+file capability only ever mattered for unprivileged users, and for those the
+sysctl is the better mechanism anyway.</p>
+<p>The sysctl lives in the <strong>launcher</strong>, not the Dockerfile — it is a property of
+the pod, not of the image.</p>
+</section>
 <section id="why-it-is-dropped-under-host-network">
 <h3>Why it is dropped under <code class="docutils literal notranslate"><span class="pre">--host-network</span></code><a class="headerlink" href="#why-it-is-dropped-under-host-network" title="Link to this heading">#</a></h3>
 <p>The kubelet <strong>rejects</strong> any pod that sets a namespaced <code class="docutils literal notranslate"><span class="pre">net.*</span></code> sysctl together
@@ -669,6 +689,7 @@ using it.</p></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#why-not-just-use-netshoot">Why not just use netshoot?</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#why-not-kubectl-debug">Why not <code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">debug</span></code>?</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#making-ping-work-without-privilege">Making ping work without privilege</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-trap-ep-breaks-exec-not-just-the-socket">The trap: <code class="docutils literal notranslate"><span class="pre">+ep</span></code> breaks exec, not just the socket</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-it-is-dropped-under-host-network">Why it is dropped under <code class="docutils literal notranslate"><span class="pre">--host-network</span></code></a></li>
 </ul>
 </li>
@@ -690,7 +711,7 @@ using it.</p></li>
 
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/epics-containers/ec-netshoot/edit/0e9be9b/docs/explanations/design.md">
+    <a href="https://github.com/epics-containers/ec-netshoot/edit/0.1.0-1-gacda054/docs/explanations/design.md">
       <i class="fa-solid fa-pencil"></i>
       
       

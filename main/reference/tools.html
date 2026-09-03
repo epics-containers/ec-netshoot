@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Tools &#8212; ec-netshoot 0e9be9b documentation</title>
+    <title>Tools &#8212; ec-netshoot 0.1.0-1-gacda054 documentation</title>
   
   
   
@@ -40,7 +40,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
 
-    <script src="../_static/documentation_options.js?v=77622bff"></script>
+    <script src="../_static/documentation_options.js?v=d8ccb4cc"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -50,7 +50,7 @@
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.21.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://epics-containers.github.io/ec-netshoot/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0e9be9b';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.1.0-1-gacda054';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -60,7 +60,7 @@
     <link rel="prev" title="Launcher Reference" href="launcher.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0e9be9b" />
+  <meta name="docsearch:version" content="0.1.0-1-gacda054" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -509,8 +509,19 @@ whether they will still work if these namespaces are ever tightened. See
 </section>
 <section id="best-effort-need-cap-net-raw">
 <h2>Best effort — need <code class="docutils literal notranslate"><span class="pre">CAP_NET_RAW</span></code><a class="headerlink" href="#best-effort-need-cap-net-raw" title="Link to this heading">#</a></h2>
-<p>Present by default, dropped by the restricted Pod Security Standard. <code class="docutils literal notranslate"><span class="pre">ping</span></code>
-additionally works capability-free when the launcher’s sysctl is applied.</p>
+<p>These open raw sockets, so they work only when the pod actually holds
+<code class="docutils literal notranslate"><span class="pre">CAP_NET_RAW</span></code> in its effective set. <code class="docutils literal notranslate"><span class="pre">ping</span></code> additionally works with no
+capability at all when the launcher’s <code class="docutils literal notranslate"><span class="pre">ping_group_range</span></code> sysctl is applied,
+which is the default.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The image strips file capabilities from all of its binaries. Ubuntu ships
+<code class="docutils literal notranslate"><span class="pre">ping</span></code>, <code class="docutils literal notranslate"><span class="pre">arping</span></code> and <code class="docutils literal notranslate"><span class="pre">mtr-packet</span></code> with <code class="docutils literal notranslate"><span class="pre">cap_net_raw+ep</span></code>, and the effective bit
+makes <code class="docutils literal notranslate"><span class="pre">execve</span></code> itself fail with <code class="docutils literal notranslate"><span class="pre">Operation</span> <span class="pre">not</span> <span class="pre">permitted</span></code> in any pod that drops
+capabilities or sets <code class="docutils literal notranslate"><span class="pre">allowPrivilegeEscalation:</span> <span class="pre">false</span></code>. Stripping it costs
+nothing and turns “cannot run at all” into “runs, with whatever privilege the
+pod actually has”. See <code class="docutils literal notranslate"><span class="pre">../explanations/design</span></code>.</p>
+</div>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>Tool</p></th>
@@ -623,7 +634,7 @@ If you find yourself installing the same thing twice, open an issue.</p>
 
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/epics-containers/ec-netshoot/edit/0e9be9b/docs/reference/tools.md">
+    <a href="https://github.com/epics-containers/ec-netshoot/edit/0.1.0-1-gacda054/docs/reference/tools.md">
       <i class="fa-solid fa-pencil"></i>
       
       
