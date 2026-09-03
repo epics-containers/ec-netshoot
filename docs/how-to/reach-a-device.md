@@ -84,6 +84,8 @@ netshoot -n i07-beamline --node bl07i-node1 --annotation usb-compat=enabled
 Then:
 
 ```bash
+lsusb                 # what the node actually sees
+lsusb -v -d 1234:5678 # detail for one device
 ls -l /dev/bus/usb/*/*
 ```
 
@@ -92,7 +94,7 @@ that poorly-behaved USB devices **re-enumerate onto a new bus address when they
 initialise**. A container holding a single device node loses it the moment the
 device resets; one holding the whole tree does not.
 
-This is a node-side capability rather than anything in this image, so other
+The annotation is a node-side capability rather than anything in this image, so other
 facilities can implement the same annotation and use the same command.
 
 ## Do not scan device networks

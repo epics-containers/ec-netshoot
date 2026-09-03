@@ -24,7 +24,10 @@ under any Pod Security Standard and in clusters that drop `CAP_NET_RAW`.
 | `getcap` / `capsh` | Checking what this pod is actually permitted to do |
 | `kubectl` (also `k`) | The API server's view, as the pod's ServiceAccount |
 | `iperf3` | Throughput, with a netshoot at each end |
-| `curl`, `wget`, `ssh` | From the base image |
+| `lsusb` | USB devices, when a node annotation has exposed `/dev/bus/usb` |
+| `curl` | HTTP checks against services and LoadBalancers |
+| `less`, `ps` | Paging kubectl output; process list |
+| `caget`, `pvxget`, … | See below |
 
 ## EPICS, from the base image
 
@@ -46,6 +49,10 @@ under any Pod Security Standard and in clusters that drop `CAP_NET_RAW`.
   a pod that does hold the capability.
 - **`net-tools`** — busybox's `netstat` and `ifconfig` remain available; `ss`
   and `ip` are better.
+- **A developer toolchain** — no `git`, `gh`, `ssh`, `gdb`, `npm` or compilers.
+  The image is built on `epics-base-runtime` rather than the developer image,
+  which is what takes it from 465 MB to roughly 70 MB. See
+  `../explanations/decisions/0003-base-on-epics-base-runtime`.
 
 `apt` works and the pod has egress, so anything missing is one command away.
 If you find yourself installing the same thing twice, open an issue.

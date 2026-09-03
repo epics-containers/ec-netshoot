@@ -4,7 +4,7 @@ Date: 2026-09-03
 
 ## Status
 
-Accepted
+Superseded by [3. Base on epics-base-runtime, not developer](0003-base-on-epics-base-runtime.md)
 
 ## Context
 

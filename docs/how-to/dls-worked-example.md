@@ -168,4 +168,5 @@ netshoot -c 'iperf3 -c <server-pod-ip>'
 # A device wired to one specific node
 netshoot --node bl07i-node1
 netshoot --node bl07i-node1 --annotation usb-compat=enabled   # mounts /dev/bus/usb
+netshoot --node bl07i-node1 --annotation usb-compat=enabled -c lsusb
 ```

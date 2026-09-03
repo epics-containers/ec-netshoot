@@ -1,10 +1,13 @@
 # ec-netshoot - network diagnostics for EPICS services in Kubernetes.
 #
-# Based on epics-base-developer so that caget/caput/pvxget are available
-# alongside the network tools: the point of this image is to answer
-# "can this pod reach that thing", including when "that thing" speaks EPICS.
+# Based on epics-base-*runtime*, which is ubuntu:noble plus the stripped EPICS
+# and PVXS client binaries and their libraries - so caget/caput/camonitor/
+# cainfo and pvxget/pvxinfo are all present, with PATH and LD_LIBRARY_PATH
+# already set, at 33 MB rather than the 425 MB of the developer image.
+#
+# apt still works, so anything unanticipated is one command away mid-incident.
 
-ARG BASE_IMAGE=ghcr.io/epics-containers/epics-base-developer
+ARG BASE_IMAGE=ghcr.io/epics-containers/epics-base-runtime
 # Pinned deliberately. A diagnostics tool that changes under you between
 # incidents is a bad diagnostics tool. Bump it on purpose, not by drift.
 ARG BASE_VERSION=7.0.10ec5
@@ -30,8 +33,8 @@ LABEL org.opencontainers.image.title="ec-netshoot" \
 #   netcat-openbsd     nc -zv, and port ranges: nc -zv moxa1 4000-4010
 #   socat              relays, UDP probes, unix sockets
 #   bind9-dnsutils     nslookup and dig - cluster DNS and upstream resolution
-#   bind9-host         host(1); ships separately and is only a Recommends of
-#                      bind9-dnsutils, so name it explicitly
+#   bind9-host         host(1); only a Recommends of bind9-dnsutils, so named
+#                      explicitly or --no-install-recommends drops it
 #   iproute2           ss -tulpn and the real ip(8)
 #   iputils-tracepath  path trace and path MTU, via UDP + IP_RECVERR
 #   traceroute         its default UDP method uses IP_RECVERR too; only -I/-T
@@ -41,6 +44,9 @@ LABEL org.opencontainers.image.title="ec-netshoot" \
 #   jq                 for kubectl -o json
 #   libcap2-bin        getcap/capsh - check in-pod what you are allowed to do
 #   iperf3             throughput, with an ec-netshoot at each end
+#   usbutils           lsusb, for devices exposed by a node annotation
+#   curl               HTTP checks, and fetching kubectl below
+#   less, procps       kubectl paging, and ps
 #
 # tcpdump, arping and mtr are deliberately absent. They need a raw socket, and
 # clusters commonly drop CAP_NET_RAW from the capability bounding set - where
@@ -49,16 +55,21 @@ RUN apt-get update -y && \
     apt-get install -y --no-install-recommends \
         bind9-dnsutils \
         bind9-host \
+        ca-certificates \
+        curl \
         iperf3 \
         iproute2 \
         iputils-ping \
         iputils-tracepath \
         jq \
+        less \
         libcap2-bin \
         netcat-openbsd \
         openssl \
+        procps \
         socat \
-        traceroute && \
+        traceroute \
+        usbutils && \
     rm -rf /var/lib/apt/lists/*
 
 # The base image runs `busybox --install -s`, which scatters applet symlinks
@@ -79,6 +90,7 @@ RUN for applet in nc ping ping6 traceroute traceroute6 nslookup ip; do \
 
 # kubectl, so you can ask the API server what it thinks the topology is from
 # inside the namespace. Runs as the pod's ServiceAccount, not as you.
+# This is now the single largest thing in the image.
 RUN arch="$(dpkg --print-architecture)" && \
     version="${KUBECTL_VERSION}" && \
     if [ -z "${version}" ]; then \
@@ -120,6 +132,7 @@ RUN getcap -r /usr 2>/dev/null | cut -d' ' -f1 | xargs -r -n1 setcap -r
 # things that would otherwise break silently and only show up mid-incident.
 RUN nc -h 2>&1 | grep -q -- '-z' || { echo "FATAL: nc has no -z; busybox won the PATH race" >&2; exit 1; } && \
     [ -z "$(getcap -r /usr 2>/dev/null)" ] || { echo "FATAL: file capabilities remain: $(getcap -r /usr 2>/dev/null)" >&2; exit 1; } && \
-    for tool in nslookup host dig ss socat tracepath traceroute iperf3 openssl jq kubectl k caget pvxget; do \
+    for tool in nslookup host dig ss socat tracepath traceroute iperf3 openssl \
+                jq lsusb curl kubectl k caget caput camonitor cainfo pvxget pvxinfo; do \
         command -v "${tool}" >/dev/null || { echo "FATAL: ${tool} missing" >&2; exit 1; }; \
     done
