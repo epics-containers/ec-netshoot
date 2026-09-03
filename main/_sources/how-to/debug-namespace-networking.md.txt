@@ -123,9 +123,9 @@ step 6 — in a cluster with open egress, routing is the more likely suspect.
 tracepath my-ioc.i07-beamline.svc.cluster.local
 ```
 
-Use `tracepath`, not `traceroute`. It works with **no capabilities at all**
-(UDP with an incrementing TTL, reading errors back via `IP_RECVERR`), so it
-keeps working when `traceroute` and `mtr` cannot get a raw socket. See
+`tracepath` needs **no capabilities at all** — UDP with an incrementing TTL,
+reading the errors back via `IP_RECVERR`. That is why it is the one the
+documentation leads with; `traceroute -I` and `-T` would need a raw socket. See
 `../explanations/design`.
 
 `tracepath` also reports the path MTU, which matters more than it sounds. An
@@ -134,27 +134,27 @@ black hole where small writes succeed and large ones hang forever — a
 plausible-looking "the detector stream stalls after a few seconds" that is
 really a 1500-vs-1450 mismatch.
 
-`ping` and `traceroute` are available too, but treat them as best-effort: CNIs
-and NetworkPolicies routinely drop ICMP while passing TCP happily, so a failed
-`ping` is weak evidence. **`nc -zv` against a port you care about is always the
-stronger test.**
+`ping` and `traceroute` both work here without any capability — ping via an
+unprivileged ICMP socket, traceroute via its default `IP_RECVERR` method. Still
+treat their results as weak evidence: CNIs and NetworkPolicies routinely drop
+ICMP while passing TCP happily, so a failed `ping` proves little. **`nc -zv`
+against a port you care about is always the stronger test.**
 
-## 7. Capture
+## 7. Capture — not from here
 
-Last resort, when you need to see what is actually on the wire:
+Packet capture needs `CAP_NET_RAW`, and clusters commonly drop that capability
+from the bounding set, where nothing inside a pod can recover it. `tcpdump` is
+therefore **not** in this image — see `../reference/tools`.
+
+Check what you actually have before assuming:
 
 ```bash
-tcpdump -nni any host 10.42.1.37 and port 5064 -w /tmp/capture.pcap
+capsh --decode=$(grep CapEff /proc/self/status | cut -f2)
 ```
 
-Then from your workstation:
-
-```bash
-kubectl cp i07-beamline/netshoot-$USER:/tmp/capture.pcap ./capture.pcap
-```
-
-`tcpdump` needs `CAP_NET_RAW`, which is present by default but is dropped
-under the restricted Pod Security Standard.
+When you genuinely need the wire, capture at the other end — on the device, on
+the node, or in a pod that does hold the capability. In practice steps 0-6
+settle almost everything without it.
 
 ## EPICS services
 

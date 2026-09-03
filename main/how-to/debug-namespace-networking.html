@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Debug Networking Inside a Namespace &#8212; ec-netshoot 0.1.0-1-gacda054 documentation</title>
+    <title>Debug Networking Inside a Namespace &#8212; ec-netshoot 0.1.0-2-ge043ccf documentation</title>
   
   
   
@@ -40,7 +40,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
 
-    <script src="../_static/documentation_options.js?v=d8ccb4cc"></script>
+    <script src="../_static/documentation_options.js?v=7cba4f69"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -50,7 +50,7 @@
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.21.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://epics-containers.github.io/ec-netshoot/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.1.0-1-gacda054';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.1.0-2-ge043ccf';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -61,7 +61,7 @@
     <link rel="prev" title="How-to Guides" href="../how-to.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.0-1-gacda054" />
+  <meta name="docsearch:version" content="0.1.0-2-ge043ccf" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -579,32 +579,33 @@ step 6 — in a cluster with open egress, routing is the more likely suspect.</p
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>tracepath<span class="w"> </span>my-ioc.i07-beamline.svc.cluster.local
 </pre></div>
 </div>
-<p>Use <code class="docutils literal notranslate"><span class="pre">tracepath</span></code>, not <code class="docutils literal notranslate"><span class="pre">traceroute</span></code>. It works with <strong>no capabilities at all</strong>
-(UDP with an incrementing TTL, reading errors back via <code class="docutils literal notranslate"><span class="pre">IP_RECVERR</span></code>), so it
-keeps working when <code class="docutils literal notranslate"><span class="pre">traceroute</span></code> and <code class="docutils literal notranslate"><span class="pre">mtr</span></code> cannot get a raw socket. See
+<p><code class="docutils literal notranslate"><span class="pre">tracepath</span></code> needs <strong>no capabilities at all</strong> — UDP with an incrementing TTL,
+reading the errors back via <code class="docutils literal notranslate"><span class="pre">IP_RECVERR</span></code>. That is why it is the one the
+documentation leads with; <code class="docutils literal notranslate"><span class="pre">traceroute</span> <span class="pre">-I</span></code> and <code class="docutils literal notranslate"><span class="pre">-T</span></code> would need a raw socket. See
 <code class="docutils literal notranslate"><span class="pre">../explanations/design</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">tracepath</span></code> also reports the path MTU, which matters more than it sounds. An
 overlay network with a smaller MTU than the interface advertises produces a
 black hole where small writes succeed and large ones hang forever — a
 plausible-looking “the detector stream stalls after a few seconds” that is
 really a 1500-vs-1450 mismatch.</p>
-<p><code class="docutils literal notranslate"><span class="pre">ping</span></code> and <code class="docutils literal notranslate"><span class="pre">traceroute</span></code> are available too, but treat them as best-effort: CNIs
-and NetworkPolicies routinely drop ICMP while passing TCP happily, so a failed
-<code class="docutils literal notranslate"><span class="pre">ping</span></code> is weak evidence. <strong><code class="docutils literal notranslate"><span class="pre">nc</span> <span class="pre">-zv</span></code> against a port you care about is always the
-stronger test.</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">ping</span></code> and <code class="docutils literal notranslate"><span class="pre">traceroute</span></code> both work here without any capability — ping via an
+unprivileged ICMP socket, traceroute via its default <code class="docutils literal notranslate"><span class="pre">IP_RECVERR</span></code> method. Still
+treat their results as weak evidence: CNIs and NetworkPolicies routinely drop
+ICMP while passing TCP happily, so a failed <code class="docutils literal notranslate"><span class="pre">ping</span></code> proves little. <strong><code class="docutils literal notranslate"><span class="pre">nc</span> <span class="pre">-zv</span></code>
+against a port you care about is always the stronger test.</strong></p>
 </section>
-<section id="capture">
-<h2>7. Capture<a class="headerlink" href="#capture" title="Link to this heading">#</a></h2>
-<p>Last resort, when you need to see what is actually on the wire:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>tcpdump<span class="w"> </span>-nni<span class="w"> </span>any<span class="w"> </span>host<span class="w"> </span><span class="m">10</span>.42.1.37<span class="w"> </span>and<span class="w"> </span>port<span class="w"> </span><span class="m">5064</span><span class="w"> </span>-w<span class="w"> </span>/tmp/capture.pcap
+<section id="capture-not-from-here">
+<h2>7. Capture — not from here<a class="headerlink" href="#capture-not-from-here" title="Link to this heading">#</a></h2>
+<p>Packet capture needs <code class="docutils literal notranslate"><span class="pre">CAP_NET_RAW</span></code>, and clusters commonly drop that capability
+from the bounding set, where nothing inside a pod can recover it. <code class="docutils literal notranslate"><span class="pre">tcpdump</span></code> is
+therefore <strong>not</strong> in this image — see <code class="docutils literal notranslate"><span class="pre">../reference/tools</span></code>.</p>
+<p>Check what you actually have before assuming:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>capsh<span class="w"> </span>--decode<span class="o">=</span><span class="k">$(</span>grep<span class="w"> </span>CapEff<span class="w"> </span>/proc/self/status<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-f2<span class="k">)</span>
 </pre></div>
 </div>
-<p>Then from your workstation:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl<span class="w"> </span>cp<span class="w"> </span>i07-beamline/netshoot-<span class="nv">$USER</span>:/tmp/capture.pcap<span class="w"> </span>./capture.pcap
-</pre></div>
-</div>
-<p><code class="docutils literal notranslate"><span class="pre">tcpdump</span></code> needs <code class="docutils literal notranslate"><span class="pre">CAP_NET_RAW</span></code>, which is present by default but is dropped
-under the restricted Pod Security Standard.</p>
+<p>When you genuinely need the wire, capture at the other end — on the device, on
+the node, or in a pod that does hold the capability. In practice steps 0-6
+settle almost everything without it.</p>
 </section>
 <section id="epics-services">
 <h2>EPICS services<a class="headerlink" href="#epics-services" title="Link to this heading">#</a></h2>
@@ -708,7 +709,7 @@ cainfo<span class="w"> </span>MY:PV<span class="w">                </span><span 
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#is-the-application-actually-listening">4. Is the application actually listening?</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#is-something-dropping-it">5. Is something dropping it?</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#where-does-the-path-stop">6. Where does the path stop?</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#capture">7. Capture</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#capture-not-from-here">7. Capture — not from here</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#epics-services">EPICS services</a></li>
 </ul>
   </nav></div>
@@ -717,7 +718,7 @@ cainfo<span class="w"> </span>MY:PV<span class="w">                </span><span 
 
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/epics-containers/ec-netshoot/edit/0.1.0-1-gacda054/docs/how-to/debug-namespace-networking.md">
+    <a href="https://github.com/epics-containers/ec-netshoot/edit/0.1.0-2-ge043ccf/docs/how-to/debug-namespace-networking.md">
       <i class="fa-solid fa-pencil"></i>
       
       

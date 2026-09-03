@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Design Notes &#8212; ec-netshoot 0.1.0-1-gacda054 documentation</title>
+    <title>Design Notes &#8212; ec-netshoot 0.1.0-2-ge043ccf documentation</title>
   
   
   
@@ -40,7 +40,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
 
-    <script src="../_static/documentation_options.js?v=d8ccb4cc"></script>
+    <script src="../_static/documentation_options.js?v=7cba4f69"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -50,7 +50,7 @@
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.21.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://epics-containers.github.io/ec-netshoot/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.1.0-1-gacda054';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '0.1.0-2-ge043ccf';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -61,7 +61,7 @@
     <link rel="prev" title="Explanations" href="../explanations.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.0-1-gacda054" />
+  <meta name="docsearch:version" content="0.1.0-2-ge043ccf" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -524,8 +524,6 @@ happens whenever the pod drops capabilities or sets
 <p>Note the difference from a socket failure, which reads
 <code class="docutils literal notranslate"><span class="pre">ping:</span> <span class="pre">socket:</span> <span class="pre">Operation</span> <span class="pre">not</span> <span class="pre">permitted</span></code>. One is the shell failing to launch the
 program; the other is the program failing to work. They need different fixes.</p>
-<p>Ubuntu ships the same <code class="docutils literal notranslate"><span class="pre">+ep</span></code> on <code class="docutils literal notranslate"><span class="pre">/usr/bin/arping</span></code> and <code class="docutils literal notranslate"><span class="pre">/usr/sbin/mtr-packet</span></code>, so
-all three fail identically.</p>
 <p>The image therefore <strong>strips file capabilities from every binary under <code class="docutils literal notranslate"><span class="pre">/usr</span></code></strong>
 and asserts at build time that none remain. Nothing is lost by this: a process
 that holds <code class="docutils literal notranslate"><span class="pre">CAP_NET_RAW</span></code> in its effective set — which root does whenever the
@@ -544,14 +542,15 @@ mode you inherit the node’s <code class="docutils literal notranslate"><span c
 there falls back to needing <code class="docutils literal notranslate"><span class="pre">CAP_NET_RAW</span></code> from the node’s default set.</p>
 </section>
 </section>
-<section id="why-tracepath-and-not-traceroute">
-<h2>Why <code class="docutils literal notranslate"><span class="pre">tracepath</span></code> and not <code class="docutils literal notranslate"><span class="pre">traceroute</span></code><a class="headerlink" href="#why-tracepath-and-not-traceroute" title="Link to this heading">#</a></h2>
+<section id="why-tracepath-leads">
+<h2>Why <code class="docutils literal notranslate"><span class="pre">tracepath</span></code> leads<a class="headerlink" href="#why-tracepath-leads" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">tracepath</span></code> sends UDP with an incrementing TTL and reads the errors back via
-<code class="docutils literal notranslate"><span class="pre">IP_RECVERR</span></code>. <strong>No raw socket, no capability, no sysctl.</strong> <code class="docutils literal notranslate"><span class="pre">traceroute</span> <span class="pre">-T</span></code> and
-<code class="docutils literal notranslate"><span class="pre">mtr</span></code> both need <code class="docutils literal notranslate"><span class="pre">CAP_NET_RAW</span></code>.</p>
-<p>That makes <code class="docutils literal notranslate"><span class="pre">tracepath</span></code> the only path-tracing tool that keeps working under the
-restricted PSS, so it is the one the documentation leads with. It reports path
-MTU as a bonus, which catches overlay MTU black holes.</p>
+<code class="docutils literal notranslate"><span class="pre">IP_RECVERR</span></code>. <strong>No raw socket, no capability, no sysctl.</strong> Linux <code class="docutils literal notranslate"><span class="pre">traceroute</span></code>
+uses the same trick for its default UDP method, so it works too; only its <code class="docutils literal notranslate"><span class="pre">-I</span></code>
+and <code class="docutils literal notranslate"><span class="pre">-T</span></code> modes need a raw socket.</p>
+<p>That makes both usable under the restricted PSS and in clusters that drop
+<code class="docutils literal notranslate"><span class="pre">CAP_NET_RAW</span></code>, and it is why <code class="docutils literal notranslate"><span class="pre">tracepath</span></code> — which also reports path MTU, catching
+overlay MTU black holes — is the one the documentation leads with.</p>
 </section>
 <section id="why-nc-zv-and-not-ping-as-the-headline">
 <h2>Why <code class="docutils literal notranslate"><span class="pre">nc</span> <span class="pre">-zv</span></code> and not <code class="docutils literal notranslate"><span class="pre">ping</span></code> as the headline<a class="headerlink" href="#why-nc-zv-and-not-ping-as-the-headline" title="Link to this heading">#</a></h2>
@@ -565,7 +564,7 @@ corroboration rather than proof.</p>
 <section id="the-busybox-path-problem">
 <h2>The busybox PATH problem<a class="headerlink" href="#the-busybox-path-problem" title="Link to this heading">#</a></h2>
 <p>The base image runs <code class="docutils literal notranslate"><span class="pre">busybox</span> <span class="pre">--install</span> <span class="pre">-s</span></code>, which scatters applet symlinks for
-<code class="docutils literal notranslate"><span class="pre">nc</span></code>, <code class="docutils literal notranslate"><span class="pre">ping</span></code>, <code class="docutils literal notranslate"><span class="pre">traceroute</span></code>, <code class="docutils literal notranslate"><span class="pre">nslookup</span></code>, <code class="docutils literal notranslate"><span class="pre">ip</span></code> and <code class="docutils literal notranslate"><span class="pre">arping</span></code> across the PATH.
+<code class="docutils literal notranslate"><span class="pre">nc</span></code>, <code class="docutils literal notranslate"><span class="pre">ping</span></code>, <code class="docutils literal notranslate"><span class="pre">traceroute</span></code>, <code class="docutils literal notranslate"><span class="pre">nslookup</span></code> and <code class="docutils literal notranslate"><span class="pre">ip</span></code> across the PATH.
 <strong>busybox’s <code class="docutils literal notranslate"><span class="pre">nc</span></code> has no <code class="docutils literal notranslate"><span class="pre">-z</span></code></strong> — so if it wins the PATH race, the headline
 feature of this image is silently gone.</p>
 <p>The Dockerfile removes the busybox symlinks for exactly those applets where a
@@ -618,12 +617,12 @@ connection never blocks the next run.</p>
 </section>
 <section id="running-as-root">
 <h2>Running as root<a class="headerlink" href="#running-as-root" title="Link to this heading">#</a></h2>
-<p>The pod runs as root on purpose. <code class="docutils literal notranslate"><span class="pre">tcpdump</span></code> needs it, and being able to
-<code class="docutils literal notranslate"><span class="pre">apt</span> <span class="pre">install</span></code> something unanticipated halfway through an incident is a large
-part of why this is a full image rather than a minimal one.</p>
-<p>This is the first thing that breaks if these namespaces are ever labelled
-<code class="docutils literal notranslate"><span class="pre">restricted</span></code>. Most of the tooling would survive — that is what the
-capability-free tier is for — but root would not.</p>
+<p>The pod runs as root on purpose: being able to <code class="docutils literal notranslate"><span class="pre">apt</span> <span class="pre">install</span></code> something
+unanticipated halfway through an incident is a large part of why this is a full
+image rather than a minimal one.</p>
+<p>Root is the first thing that breaks if these namespaces are ever labelled
+<code class="docutils literal notranslate"><span class="pre">restricted</span></code>. Everything else would survive — every tool in the image works
+with no capability at all.</p>
 </section>
 <section id="rejected">
 <h2>Rejected<a class="headerlink" href="#rejected" title="Link to this heading">#</a></h2>
@@ -693,7 +692,7 @@ using it.</p></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-it-is-dropped-under-host-network">Why it is dropped under <code class="docutils literal notranslate"><span class="pre">--host-network</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#why-tracepath-and-not-traceroute">Why <code class="docutils literal notranslate"><span class="pre">tracepath</span></code> and not <code class="docutils literal notranslate"><span class="pre">traceroute</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#why-tracepath-leads">Why <code class="docutils literal notranslate"><span class="pre">tracepath</span></code> leads</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#why-nc-zv-and-not-ping-as-the-headline">Why <code class="docutils literal notranslate"><span class="pre">nc</span> <span class="pre">-zv</span></code> and not <code class="docutils literal notranslate"><span class="pre">ping</span></code> as the headline</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-busybox-path-problem">The busybox PATH problem</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#identity-kubectl-inside-the-pod-is-not-you">Identity: kubectl inside the pod is not you</a><ul class="nav section-nav flex-column">
@@ -711,7 +710,7 @@ using it.</p></li>
 
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/epics-containers/ec-netshoot/edit/0.1.0-1-gacda054/docs/explanations/design.md">
+    <a href="https://github.com/epics-containers/ec-netshoot/edit/0.1.0-2-ge043ccf/docs/explanations/design.md">
       <i class="fa-solid fa-pencil"></i>
       
       
