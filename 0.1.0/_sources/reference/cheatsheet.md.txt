@@ -25,7 +25,6 @@ nc -zv 10.42.1.37 5064                                     # direct to a pod
 ss -tulpn                                                  # what is listening here
 kubectl get networkpolicy                                  # anything dropping it
 tracepath my-ioc                                           # where does it stop, and MTU
-tcpdump -nni any host X and port Y -w /tmp/c.pcap          # last resort
 ```
 
 ## Reading a failure
@@ -38,6 +37,9 @@ tcpdump -nni any host X and port Y -w /tmp/c.pcap          # last resort
 | Works on pod IP, not Service | kube-proxy or the endpoint list |
 | Works with `--host-network`, not without | Cluster is in the way — suspect masquerade |
 | Large writes hang, small ones fine | Path MTU black hole (`tracepath` reports it) |
+| `bash: /usr/bin/X: Operation not permitted` | The *shell* cannot launch it — a file-capability/NoNewPrivs clash, not a network fault |
+| `X: socket: Operation not permitted` | The program ran but was denied a raw socket — the pod lacks `CAP_NET_RAW` |
+| Need a packet capture | Not from here — `tcpdump` is not in the image. Capture on the device, the node, or a privileged pod |
 
 ## Ports
 
@@ -64,7 +66,6 @@ nc -zv moxa1 4000-4010                          # port range
 socat -v TCP-LISTEN:9999,fork STDOUT            # a listener to probe towards
 openssl s_client -connect svc:443 -servername svc   # TLS and certificates
 capsh --print                                   # what am I actually allowed to do
-kubectl cp i07-beamline/netshoot-$USER:/tmp/c.pcap ./c.pcap   # from your workstation
 ```
 
 Bandwidth needs a netshoot at each end:

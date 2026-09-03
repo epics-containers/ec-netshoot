@@ -454,12 +454,12 @@
                   
   <section id="tools">
 <h1>Tools<a class="headerlink" href="#tools" title="Link to this heading">#</a></h1>
-<p>Grouped by what they need from the container runtime, because that determines
-whether they will still work if these namespaces are ever tightened. See
-<code class="docutils literal notranslate"><span class="pre">../explanations/design</span></code> for why that split matters.</p>
-<section id="work-with-no-capabilities-at-all">
-<h2>Work with no capabilities at all<a class="headerlink" href="#work-with-no-capabilities-at-all" title="Link to this heading">#</a></h2>
-<p>Available under any Pod Security Standard, including <code class="docutils literal notranslate"><span class="pre">restricted</span></code>.</p>
+<p>What is in the image and what each thing is for. Nothing here needs a Linux
+capability, which is deliberate — see <code class="docutils literal notranslate"><span class="pre">../explanations/design</span></code>.</p>
+<section id="everything-in-the-image">
+<h2>Everything in the image<a class="headerlink" href="#everything-in-the-image" title="Link to this heading">#</a></h2>
+<p>Every tool here works with <strong>no capabilities at all</strong>, so the image is useful
+under any Pod Security Standard and in clusters that drop <code class="docutils literal notranslate"><span class="pre">CAP_NET_RAW</span></code>.</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>Tool</p></th>
@@ -485,6 +485,12 @@ whether they will still work if these namespaces are ever tightened. See
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">tracepath</span></code></p></td>
 <td><p>Path tracing <strong>and path MTU</strong>, with no raw socket</p></td>
 </tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ping</span></code></p></td>
+<td><p>ICMP echo, via an unprivileged <code class="docutils literal notranslate"><span class="pre">SOCK_DGRAM</span></code> socket. Weak evidence — CNIs often drop ICMP but pass TCP</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">traceroute</span></code></p></td>
+<td><p>Path tracing. Default UDP method uses <code class="docutils literal notranslate"><span class="pre">IP_RECVERR</span></code>, so no raw socket</p></td>
+</tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">openssl</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">s_client</span></code> for TLS handshakes and certificates</p></td>
 </tr>
@@ -502,36 +508,6 @@ whether they will still work if these namespaces are ever tightened. See
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">curl</span></code>, <code class="docutils literal notranslate"><span class="pre">wget</span></code>, <code class="docutils literal notranslate"><span class="pre">ssh</span></code></p></td>
 <td><p>From the base image</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
-<section id="best-effort-need-cap-net-raw">
-<h2>Best effort — need <code class="docutils literal notranslate"><span class="pre">CAP_NET_RAW</span></code><a class="headerlink" href="#best-effort-need-cap-net-raw" title="Link to this heading">#</a></h2>
-<p>Present by default, dropped by the restricted Pod Security Standard. <code class="docutils literal notranslate"><span class="pre">ping</span></code>
-additionally works capability-free when the launcher’s sysctl is applied.</p>
-<div class="pst-scrollable-table-container"><table class="table">
-<thead>
-<tr class="row-odd"><th class="head"><p>Tool</p></th>
-<th class="head"><p>For</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ping</span></code></p></td>
-<td><p>ICMP echo. Weak evidence — CNIs often drop ICMP but pass TCP</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">arping</span></code></p></td>
-<td><p>Is a device answering ARP on this L2 segment</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">traceroute</span></code></p></td>
-<td><p>Path tracing. Prefer <code class="docutils literal notranslate"><span class="pre">tracepath</span></code></p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">mtr</span></code></p></td>
-<td><p>Continuous path statistics</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">tcpdump</span></code></p></td>
-<td><p>Packet capture</p></td>
 </tr>
 </tbody>
 </table>
@@ -566,6 +542,11 @@ additionally works capability-free when the launcher’s sysctl is applied.</p>
 <h2>Deliberately absent<a class="headerlink" href="#deliberately-absent" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">nmap</span></code></strong> — scanning fragile device hardware can wedge it. <code class="docutils literal notranslate"><span class="pre">nc</span> <span class="pre">-zv</span> <span class="pre">host</span> <span class="pre">4000-4010</span></code> covers the legitimate case. See <code class="docutils literal notranslate"><span class="pre">../how-to/reach-a-device</span></code>.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">tcpdump</span></code>, <code class="docutils literal notranslate"><span class="pre">arping</span></code>, <code class="docutils literal notranslate"><span class="pre">mtr</span></code></strong> — they need a raw socket, and clusters commonly
+drop <code class="docutils literal notranslate"><span class="pre">CAP_NET_RAW</span></code> from the capability bounding set, where nothing inside the
+pod can recover it. Shipping tools that cannot run only wastes time during an
+incident. Capture at the other end instead: on the device, on the node, or in
+a pod that does hold the capability.</p></li>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">net-tools</span></code></strong> — busybox’s <code class="docutils literal notranslate"><span class="pre">netstat</span></code> and <code class="docutils literal notranslate"><span class="pre">ifconfig</span></code> remain available; <code class="docutils literal notranslate"><span class="pre">ss</span></code>
 and <code class="docutils literal notranslate"><span class="pre">ip</span></code> are better.</p></li>
 </ul>
@@ -612,8 +593,7 @@ If you find yourself installing the same thing twice, open an issue.</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#work-with-no-capabilities-at-all">Work with no capabilities at all</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#best-effort-need-cap-net-raw">Best effort — need <code class="docutils literal notranslate"><span class="pre">CAP_NET_RAW</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#everything-in-the-image">Everything in the image</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#epics-from-the-base-image">EPICS, from the base image</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deliberately-absent">Deliberately absent</a></li>
 </ul>
