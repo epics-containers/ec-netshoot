@@ -2,5 +2,9 @@
   {
     "version": "main",
     "url": "https://epics-containers.github.io/ec-netshoot/main/"
+  },
+  {
+    "version": "0.1.0",
+    "url": "https://epics-containers.github.io/ec-netshoot/0.1.0/"
   }
 ]
