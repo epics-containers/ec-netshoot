@@ -29,7 +29,9 @@ LABEL org.opencontainers.image.title="ec-netshoot" \
 # under any Pod Security Standard and in clusters that drop CAP_NET_RAW.
 #   netcat-openbsd     nc -zv, and port ranges: nc -zv moxa1 4000-4010
 #   socat              relays, UDP probes, unix sockets
-#   bind9-dnsutils     dig / host - cluster DNS and upstream resolution
+#   bind9-dnsutils     nslookup and dig - cluster DNS and upstream resolution
+#   bind9-host         host(1); ships separately and is only a Recommends of
+#                      bind9-dnsutils, so name it explicitly
 #   iproute2           ss -tulpn and the real ip(8)
 #   iputils-tracepath  path trace and path MTU, via UDP + IP_RECVERR
 #   traceroute         its default UDP method uses IP_RECVERR too; only -I/-T
@@ -46,6 +48,7 @@ LABEL org.opencontainers.image.title="ec-netshoot" \
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends \
         bind9-dnsutils \
+        bind9-host \
         iperf3 \
         iproute2 \
         iputils-ping \
@@ -113,6 +116,6 @@ RUN getcap -r /usr 2>/dev/null | cut -d' ' -f1 | xargs -r -n1 setcap -r
 # things that would otherwise break silently and only show up mid-incident.
 RUN nc -h 2>&1 | grep -q -- '-z' || { echo "FATAL: nc has no -z; busybox won the PATH race" >&2; exit 1; } && \
     [ -z "$(getcap -r /usr 2>/dev/null)" ] || { echo "FATAL: file capabilities remain: $(getcap -r /usr 2>/dev/null)" >&2; exit 1; } && \
-    for tool in dig ss socat tracepath traceroute iperf3 openssl jq kubectl caget pvxget; do \
+    for tool in nslookup host dig ss socat tracepath traceroute iperf3 openssl jq kubectl caget pvxget; do \
         command -v "${tool}" >/dev/null || { echo "FATAL: ${tool} missing" >&2; exit 1; }; \
     done

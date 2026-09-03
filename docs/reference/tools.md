@@ -12,7 +12,8 @@ under any Pod Security Standard and in clusters that drop `CAP_NET_RAW`.
 |---|---|
 | `nc` (netcat-openbsd) | TCP reachability — `nc -zv host port`, and port ranges |
 | `socat` | Relays, UDP probes, unix sockets, ad-hoc listeners |
-| `dig`, `host` | Cluster DNS and upstream resolution |
+| `nslookup`, `host` | Cluster DNS — **both honour the search path**, so `nslookup my-ioc` works |
+| `dig` | When you need a record type, a specific server, or TTLs. Note `dig` ignores the search path unless given `+search` |
 | `ss` | What is listening and what is connected |
 | `ip` | Interfaces, addresses, routes |
 | `tracepath` | Path tracing **and path MTU**, with no raw socket |

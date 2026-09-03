@@ -18,7 +18,8 @@ netshoot --print                                # show the manifest, change noth
 
 ```bash
 cat /etc/resolv.conf                                       # search path, ndots
-dig +search my-ioc                                         # does the name resolve
+nslookup my-ioc                                            # does the name resolve
+dig SRV _pva._tcp.my-ioc.NS.svc.cluster.local              # when you need a record type
 kubectl get endpointslices -l kubernetes.io/service-name=my-ioc   # any endpoints?
 nc -zv my-ioc 5064                                         # via the Service
 nc -zv 10.42.1.37 5064                                     # direct to a pod
