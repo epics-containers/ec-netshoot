@@ -1,7 +1,7 @@
 # Tools
 
 What is in the image and what each thing is for. Nothing here needs a Linux
-capability, which is deliberate — see `../explanations/design`.
+capability, which is deliberate — see [the design notes](../explanations/design.md).
 
 ## Everything in the image
 
@@ -41,7 +41,7 @@ under any Pod Security Standard and in clusters that drop `CAP_NET_RAW`.
 ## Deliberately absent
 
 - **`nmap`** — scanning fragile device hardware can wedge it. `nc -zv host
-  4000-4010` covers the legitimate case. See `../how-to/reach-a-device`.
+  4000-4010` covers the legitimate case. See [Reach a Device From a Namespace](../how-to/reach-a-device.md).
 - **`tcpdump`, `arping`, `mtr`** — they need a raw socket, and clusters commonly
   drop `CAP_NET_RAW` from the capability bounding set, where nothing inside the
   pod can recover it. Shipping tools that cannot run only wastes time during an

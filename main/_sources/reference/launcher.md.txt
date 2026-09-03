@@ -51,7 +51,7 @@ annotations and resource requests when the corresponding options are given.
 `--print` shows the whole thing.
 
 Each of those is doing something specific and non-obvious; see
-`../explanations/design`.
+[the design notes](../explanations/design.md).
 
 ## Exit behaviour
 

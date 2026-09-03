@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Design Notes &#8212; ec-netshoot 1.0.0-1-g5277730 documentation</title>
+    <title>Design Notes &#8212; ec-netshoot 1.0.1 documentation</title>
   
   
   
@@ -40,7 +40,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
 
-    <script src="../_static/documentation_options.js?v=e65e73fc"></script>
+    <script src="../_static/documentation_options.js?v=292eb321"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -50,7 +50,7 @@
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.21.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://epics-containers.github.io/ec-netshoot/switcher.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '1.0.0-1-g5277730';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '1.0.1';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
@@ -61,7 +61,7 @@
     <link rel="prev" title="Explanations" href="../explanations.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.0-1-g5277730" />
+  <meta name="docsearch:version" content="1.0.1" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -621,7 +621,7 @@ connection never blocks the next run.</p>
 <p>The pod runs as root on purpose: being able to <code class="docutils literal notranslate"><span class="pre">apt</span> <span class="pre">install</span></code> something
 unanticipated halfway through an incident matters more than the principle, and
 packet-adjacent tools generally want it. The image is small (see
-<code class="docutils literal notranslate"><span class="pre">decisions/0003-base-on-epics-base-runtime</span></code>) but not minimal, precisely so that
+<a class="reference internal" href="decisions/0003-base-on-epics-base-runtime.html"><span class="std std-doc">ADR 0003</span></a>) but not minimal, precisely so that
 escape hatch exists.</p>
 <p>Root is the first thing that breaks if these namespaces are ever labelled
 <code class="docutils literal notranslate"><span class="pre">restricted</span></code>. Everything else would survive — every tool in the image works
@@ -633,13 +633,13 @@ with no capability at all.</p>
 <li><p><strong>A slim variant.</strong> Pull latency did bite, so rather than publish two images
 the single image was made small — <code class="docutils literal notranslate"><span class="pre">epics-base-runtime</span></code> instead of the
 developer image, 465 MB down to roughly 70 MB. See
-<code class="docutils literal notranslate"><span class="pre">decisions/0003-base-on-epics-base-runtime</span></code>.</p></li>
+<a class="reference internal" href="decisions/0003-base-on-epics-base-runtime.html"><span class="std std-doc">ADR 0003</span></a>.</p></li>
 <li><p><strong>Hand-copying EPICS binaries into <code class="docutils literal notranslate"><span class="pre">ubuntu:noble</span></code>.</strong> <code class="docutils literal notranslate"><span class="pre">caget</span></code> and <code class="docutils literal notranslate"><span class="pre">pvxget</span></code> are
 dynamically linked against <code class="docutils literal notranslate"><span class="pre">libca</span></code>, <code class="docutils literal notranslate"><span class="pre">libCom</span></code>, <code class="docutils literal notranslate"><span class="pre">libpvxs</span></code> and <code class="docutils literal notranslate"><span class="pre">libevent_core</span></code>,
 so this means chasing shared libraries and re-chasing them on every base
 bump. <code class="docutils literal notranslate"><span class="pre">epics-base-runtime</span></code> is that job already done, upstream.</p></li>
 <li><p><strong>A Helm chart.</strong> This is never deployed; it is <code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">run</span></code>-ed.</p></li>
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">nmap</span></code>.</strong> See <code class="docutils literal notranslate"><span class="pre">../how-to/reach-a-device</span></code>.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">nmap</span></code>.</strong> See <a class="reference internal" href="../how-to/reach-a-device.html"><span class="std std-doc">Reach a Device From a Namespace</span></a>.</p></li>
 <li><p><strong>Tests and a <code class="docutils literal notranslate"><span class="pre">:edge</span></code> tag.</strong> The Dockerfile’s build-time assertions cover the
 claims that could break silently. Everything else is better learned by
 using it.</p></li>
@@ -719,7 +719,7 @@ using it.</p></li>
 
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/epics-containers/ec-netshoot/edit/1.0.0-1-g5277730/docs/explanations/design.md">
+    <a href="https://github.com/epics-containers/ec-netshoot/edit/1.0.1/docs/explanations/design.md">
       <i class="fa-solid fa-pencil"></i>
       
       
