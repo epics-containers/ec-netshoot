@@ -42,9 +42,7 @@ rtt min/avg/max/mdev = 0.076/0.095/0.115/0.019 ms
 
 Two things worth noting. This is the **pod** network, not `--host-network`:
 beamline device networks are routed from pods as well as from nodes, so device
-reachability needs no special flags. And ping works here despite the cluster
-dropping `CAP_NET_RAW` — that is the launcher's `ping_group_range` sysctl doing
-its job. See `../explanations/design`.
+reachability needs no special flags.
 
 ## Services do not answer ping
 
@@ -81,11 +79,6 @@ service's declared **ports** and nothing else. ICMP has no port, so nothing
 rewrites it, and the packet leaves with a destination address that nothing in
 the cluster claims.
 
-Look at where the error came from — `bl09i-nt-netsw-04-04r`, a switch on a
-*different beamline*. The ping escaped the cluster entirely and a site router
-answered on its behalf. A more confusing result is hard to imagine, and none of
-it says anything about the service.
-
 **A failed ping to a Service means nothing. Use `nc -zv`.**
 
 ## Check the port instead
@@ -108,10 +101,14 @@ nc -zv excalibur-01-odin-data-0 10004-10008
 
 ## EPICS through the gateway
 
+UPDATE: I've found that caget works without using the gateway from this pod
+a surprising result that requires more investigation!
+
 The pod network has no broadcast, so default CA name search finds nothing. At
 DLS the answer is the gateway service rather than `--host-network`:
 
 ```bash
+# it seems you don't actually need this unless you are testing your gateways pod
 export EPICS_CA_ADDR_LIST=i07-epics-gateways:9064
 caget BL07I-VA-IONP-06:STA
 ```
