@@ -132,7 +132,7 @@ export EPICS_PVA_NAME_SERVERS=i07-epics-gateways:9075
 pvxget BL07I-VA-IONP-06:STA
 ```
 
-Two follow-ups worth knowing:
+Also:
 
 ```bash
 cainfo BL07I-VA-IONP-06:STA      # which server actually answered — the gateway
