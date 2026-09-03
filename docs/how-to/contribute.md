@@ -17,7 +17,7 @@ podman run --rm -it ec-netshoot bash
 
 The build fails if `nc` has no `-z` (which would mean busybox won the PATH
 race) or if any expected tool is missing. That is intentional — see
-`../explanations/design`.
+[the design notes](../explanations/design.md).
 
 To build against a different base or pin kubectl:
 

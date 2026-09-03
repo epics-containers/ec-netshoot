@@ -63,7 +63,11 @@ netshoot -n i07-beamline -c 'nc -zv my-ioc 5064'
 
 ## Where next
 
-- `../how-to/debug-namespace-networking` — the ladder to work down when
-  something in the namespace cannot reach something else
-- `../how-to/reach-a-device` — when an IOC cannot see its hardware
-- `../reference/cheatsheet` — the page to paste from
+- [Debug Networking Inside a Namespace](../how-to/debug-namespace-networking.md) —
+  the ladder to work down when something in the namespace cannot reach something
+  else
+- [Reach a Device From a Namespace](../how-to/reach-a-device.md) — when an IOC
+  cannot see its hardware
+- [A Worked Session (Diamond Light Source)](../how-to/dls-worked-example.md) — a
+  real annotated session, if you are at DLS
+- [Cheat Sheet](../reference/cheatsheet.md) — the page to paste from

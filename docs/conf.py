@@ -26,7 +26,6 @@ extensions = [
 myst_enable_extensions = ["colon_fence"]
 
 nitpicky = True
-default_role = "any"
 master_doc = "index"
 exclude_patterns = ["_build"]
 pygments_style = "sphinx"

@@ -176,7 +176,7 @@ connection never blocks the next run.
 The pod runs as root on purpose: being able to `apt install` something
 unanticipated halfway through an incident matters more than the principle, and
 packet-adjacent tools generally want it. The image is small (see
-`decisions/0003-base-on-epics-base-runtime`) but not minimal, precisely so that
+[ADR 0003](decisions/0003-base-on-epics-base-runtime.md)) but not minimal, precisely so that
 escape hatch exists.
 
 Root is the first thing that breaks if these namespaces are ever labelled
@@ -188,13 +188,13 @@ with no capability at all.
 - **A slim variant.** Pull latency did bite, so rather than publish two images
   the single image was made small — `epics-base-runtime` instead of the
   developer image, 465 MB down to roughly 70 MB. See
-  `decisions/0003-base-on-epics-base-runtime`.
+  [ADR 0003](decisions/0003-base-on-epics-base-runtime.md).
 - **Hand-copying EPICS binaries into `ubuntu:noble`.** `caget` and `pvxget` are
   dynamically linked against `libca`, `libCom`, `libpvxs` and `libevent_core`,
   so this means chasing shared libraries and re-chasing them on every base
   bump. `epics-base-runtime` is that job already done, upstream.
 - **A Helm chart.** This is never deployed; it is `kubectl run`-ed.
-- **`nmap`.** See `../how-to/reach-a-device`.
+- **`nmap`.** See [Reach a Device From a Namespace](../how-to/reach-a-device.md).
 - **Tests and a `:edge` tag.** The Dockerfile's build-time assertions cover the
   claims that could break silently. Everything else is better learned by
   using it.

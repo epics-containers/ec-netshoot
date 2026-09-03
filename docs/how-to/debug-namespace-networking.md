@@ -81,7 +81,7 @@ show that.
 :::{note}
 `kubectl` inside the pod authenticates as the pod's **ServiceAccount**, not as
 you. If you get `Forbidden`, that is RBAC working correctly — see
-`../explanations/design`.
+[the design notes](../explanations/design.md).
 :::
 
 ## 3. Is TCP getting through?
@@ -105,7 +105,7 @@ traffic to the service's declared *ports* and nothing else. ICMP has no port, so
 the packet is never rewritten, leaves the cluster with an address nothing claims,
 and a site router eventually answers `Destination Host Unreachable` — from
 somewhere with no connection to your problem at all. A healthy Service fails this
-test every time. See `dls-worked-example` for what that looks like.
+test every time. See [the DLS worked example](dls-worked-example.md) for what that looks like.
 :::
 
 Note the failure *mode*, not just the failure. **Connection refused** means a
@@ -150,7 +150,7 @@ tracepath my-ioc.i07-beamline.svc.cluster.local
 `tracepath` needs **no capabilities at all** — UDP with an incrementing TTL,
 reading the errors back via `IP_RECVERR`. That is why it is the one the
 documentation leads with; `traceroute -I` and `-T` would need a raw socket. See
-`../explanations/design`.
+[the design notes](../explanations/design.md).
 
 `tracepath` also reports the path MTU, which matters more than it sounds. An
 overlay network with a smaller MTU than the interface advertises produces a
@@ -168,7 +168,7 @@ against a port you care about is always the stronger test.**
 
 Packet capture needs `CAP_NET_RAW`, and clusters commonly drop that capability
 from the bounding set, where nothing inside a pod can recover it. `tcpdump` is
-therefore **not** in this image — see `../reference/tools`.
+therefore **not** in this image — see [Tools](../reference/tools.md).
 
 Check what you actually have before assuming:
 
@@ -202,7 +202,7 @@ export EPICS_PVA_NAME_SERVERS=<gateway-service>:<pva-port>
 pvxget MY:PV
 ```
 
-`kubectl get svc` shows the gateway and its ports. See `dls-worked-example` for
+`kubectl get svc` shows the gateway and its ports. See [the DLS worked example](dls-worked-example.md) for
 a real one.
 
 **2. Address one IOC directly**, skipping search entirely:
