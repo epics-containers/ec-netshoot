@@ -1,7 +1,7 @@
 # The only python in this repo. Builds docs/ to HTML for GitHub Pages and
 # touches nothing else.
 sphinx~=8.1
-myst-parser~=4.0
+myst-parser~=5.1
 pydata-sphinx-theme~=0.16
 sphinx-copybutton~=0.5
 sphinx-design~=0.6
