@@ -99,6 +99,15 @@ Comparing those two is the useful part:
 | fail | fail | nothing is listening, or traffic is being dropped |
 | works | works | not a connectivity problem; look at the application |
 
+:::{warning}
+**Do not ping a Service.** A ClusterIP is a virtual address: kube-proxy rewrites
+traffic to the service's declared *ports* and nothing else. ICMP has no port, so
+the packet is never rewritten, leaves the cluster with an address nothing claims,
+and a site router eventually answers `Destination Host Unreachable` — from
+somewhere with no connection to your problem at all. A healthy Service fails this
+test every time. See `dls-worked-example` for what that looks like.
+:::
+
 Note the failure *mode*, not just the failure. **Connection refused** means a
 packet reached a host that actively said no — the path is fine, the port is
 shut. **Timeout** means nothing came back at all, which is a drop somewhere:
@@ -173,38 +182,47 @@ settle almost everything without it.
 
 ## EPICS services
 
-Mostly this behaves the same from a netshoot pod as it does from your
-workstation, so this is rarely the reason to reach for this tool. The parts
-that are specific:
-
 | Protocol | Search | Data |
 |---|---|---|
 | Channel Access | UDP 5064 | TCP 5064 |
 | PV Access | UDP 5076 | TCP 5075 |
 
-With default EPICS settings, **name search is a UDP broadcast**, and broadcast
-does not cross the pod network. IOCs at DLS run with `hostNetwork: true` for
-exactly this reason, so to search for PVs the same way an IOC does you need:
+With default EPICS settings **name search is a UDP broadcast**, and broadcast
+does not cross the pod network. So a plain `caget` from a netshoot pod finds
+nothing, even when the IOC is healthy and one namespace away. There are three
+ways round it, in the order you should try them.
+
+**1. A CA/PVA gateway service.** Usually the right answer, and what services in
+the cluster already use. The gateway accepts the unicast search a pod can do:
 
 ```bash
-netshoot -n i07-beamline --host-network
-caget MY:PV:NAME
+export EPICS_CA_ADDR_LIST=<gateway-service>:<ca-port>
+caget MY:PV
+export EPICS_PVA_NAME_SERVERS=<gateway-service>:<pva-port>
+pvxget MY:PV
 ```
 
-Without `--host-network` you can still talk to a PV if you skip the broadcast
-and address the server directly:
+`kubectl get svc` shows the gateway and its ports. See `dls-worked-example` for
+a real one.
+
+**2. Address one IOC directly**, skipping search entirely:
 
 ```bash
 EPICS_CA_AUTO_ADDR_LIST=NO EPICS_CA_ADDR_LIST=my-ioc.i07-beamline.svc caget MY:PV
 EPICS_PVA_NAME_SERVERS=my-ioc.i07-beamline.svc:5075 pvxget MY:PV
 ```
 
-That distinction matters when triaging: **a `caget` timeout is far more often
-an address-list problem than a network fault.** Prove the transport separately
-before blaming the network:
+**3. `netshoot -h`** puts you on the node's network stack, where broadcast
+search works the way an IOC does it. Useful for reproducing an IOC's exact
+view — but at that point you are testing roughly what a workstation tests.
+
+Whichever route, the triage point is the same: **a `caget` timeout is far more
+often an address-list problem than a network fault.** Prove the transport
+separately before blaming the network:
 
 ```bash
 nc -zv my-ioc 5064          # is the CA TCP port reachable at all?
 cainfo MY:PV                # which server actually answered?
+caget -w5 MY:PV             # bounded timeout instead of a hang
 PVXS_LOG='*=DEBUG' pvxget MY:PV
 ```

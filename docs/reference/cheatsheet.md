@@ -34,6 +34,7 @@ tracepath my-ioc                                           # where does it stop,
 |---|---|
 | Connection refused | Path is fine, nothing listening on that port |
 | Timeout | Dropped somewhere — policy, routing, or masquerade |
+| `ping` to a Service says Destination Host Unreachable | Expected. ClusterIPs never answer ICMP — use `nc -zv` |
 | Name resolves, no endpoints | Service selector does not match pod labels |
 | Works on pod IP, not Service | kube-proxy or the endpoint list |
 | Works with `--host-network`, not without | Cluster is in the way — suspect masquerade |
@@ -54,6 +55,7 @@ tracepath my-ioc                                           # where does it stop,
 ## EPICS without broadcast
 
 ```bash
+export EPICS_CA_ADDR_LIST=<gateway-svc>:9064          # via a CA gateway (usual route)
 EPICS_CA_AUTO_ADDR_LIST=NO EPICS_CA_ADDR_LIST=my-ioc.i07-beamline.svc caget MY:PV
 EPICS_PVA_NAME_SERVERS=my-ioc.i07-beamline.svc:5075 pvxget MY:PV
 cainfo MY:PV                       # which server actually answered
