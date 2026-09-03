@@ -1,0 +1,18 @@
+# Not run in CI - CI publishes docs and a container image, nothing else.
+# Install locally with `pre-commit install` if you are editing the launcher.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.10.0
+    hooks:
+      - id: shellcheck
+        files: ^netshoot$
+        types: []

@@ -1,0 +1,6 @@
+# docs build output
+build/
+docs/_build/
+
+# local docs venv
+.venv*

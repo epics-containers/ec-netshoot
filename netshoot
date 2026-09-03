@@ -1,0 +1,235 @@
+#!/usr/bin/env bash
+#
+# netshoot - launch an ec-netshoot diagnostics pod in a Kubernetes namespace.
+#
+#   curl -O https://raw.githubusercontent.com/epics-containers/ec-netshoot/main/netshoot
+#   chmod +x netshoot
+#
+# Requires only kubectl and a working kubeconfig.
+
+set -euo pipefail
+
+IMAGE_DEFAULT=ghcr.io/epics-containers/ec-netshoot
+VERSION_DEFAULT=latest
+
+image=${IMAGE_DEFAULT}
+version=${VERSION_DEFAULT}
+namespace=
+node=
+host_network=false
+keep=false
+delete=false
+print=false
+sysctl=true
+service_account=
+name=
+command_arg=
+annotations=()
+
+usage() {
+    cat <<'USAGE'
+usage: netshoot [options]
+
+Launch a network diagnostics pod in a Kubernetes namespace, with the EPICS
+tools and the good versions of nc, dig, ss, tracepath and friends.
+
+Options:
+  -n, --namespace NS      namespace (default: current context)
+      --node NAME         pin to a node, verbatim (bypasses the scheduler,
+                          and therefore also bypasses taints)
+      --host-network      use the node's network stack instead of the pod's.
+                          Also sets dnsPolicy=ClusterFirstWithHostNet, and
+                          disables the ping sysctl (the kubelet forbids the
+                          combination). Needed for EPICS CA/PVA broadcast.
+  -k, --keep              leave the pod running after you exit; re-running
+                          netshoot opens another shell in the same pod
+      --delete            delete the pod and exit
+      --name NAME         pod name (default: netshoot-$USER). Use it to run
+                          two pods at once, e.g. on different nodes
+      --service-account N run as this ServiceAccount instead of "default"
+      --annotation K=V    add a pod annotation (repeatable). For example
+                          --annotation usb-compat=enabled, which on DLS nodes
+                          mounts the whole of /dev/bus/usb
+  -i, --image IMAGE       container image (default: IMAGE_DEFAULT_DOC)
+  -v, --version VERSION   image version (default: VERSION_DEFAULT_DOC)
+  -c, --command 'CMD'     run one command and exit, instead of a shell
+      --print             print the pod manifest and exit; no cluster changes
+      --no-sysctl         omit the net.ipv4.ping_group_range sysctl, for
+                          namespaces whose admission policy rejects sysctls
+  -h, --help              this message
+
+Examples:
+  netshoot -n i07-beamline                      # a shell in the namespace
+  netshoot -c 'nc -zv my-ioc 5064'              # one-shot reachability check
+  netshoot --node bl07i-node1 --host-network    # the node's view, same node
+  netshoot -k --name iperf-server               # long-lived, for iperf3 etc.
+USAGE
+}
+
+die() { echo "netshoot: $*" >&2; exit 1; }
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -n|--namespace)      namespace=${2:?--namespace needs a value}; shift 2 ;;
+        --node)              node=${2:?--node needs a value}; shift 2 ;;
+        --host-network)      host_network=true; shift ;;
+        -k|--keep)           keep=true; shift ;;
+        --delete)            delete=true; shift ;;
+        --name)              name=${2:?--name needs a value}; shift 2 ;;
+        --service-account)   service_account=${2:?--service-account needs a value}; shift 2 ;;
+        --annotation)        annotations+=("${2:?--annotation needs K=V}"); shift 2 ;;
+        -i|--image)          image=${2:?--image needs a value}; shift 2 ;;
+        -v|--version)        version=${2:?--version needs a value}; shift 2 ;;
+        -c|--command)        command_arg=${2:?--command needs a value}; shift 2 ;;
+        --print)             print=true; shift ;;
+        --no-sysctl)         sysctl=false; shift ;;
+        -h|--help)           usage | sed -e "s#IMAGE_DEFAULT_DOC#${IMAGE_DEFAULT}#" \
+                                         -e "s#VERSION_DEFAULT_DOC#${VERSION_DEFAULT}#"; exit 0 ;;
+        *)                   die "unknown option '$1' (try --help)" ;;
+    esac
+done
+
+command -v kubectl >/dev/null || die "kubectl not found on PATH"
+
+# Pod names must be RFC1123 labels. Most site usernames already are, but not
+# all of them - fed IDs with dots or capitals would otherwise fail at the API
+# with an unhelpful error.
+if [[ -z ${name} ]]; then
+    name="netshoot-$(printf '%s' "${USER:-unknown}" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9-' '-')"
+fi
+name=$(printf '%s' "${name}" | cut -c1-63 | sed -e 's/-*$//')
+
+# Resolving the namespace explicitly rather than letting kubectl default it,
+# so that it can be echoed. Creating a pod in the wrong namespace is the
+# easiest mistake to make with this tool and the hardest to notice.
+if [[ -z ${namespace} ]]; then
+    namespace=$(kubectl config view --minify -o jsonpath='{..namespace}' 2>/dev/null || true)
+    namespace=${namespace:-default}
+fi
+
+if ${delete}; then
+    kubectl delete pod "${name}" -n "${namespace}" --ignore-not-found=true
+    exit 0
+fi
+
+################################################################################
+# Build the pod spec overrides.
+#
+# Assembled as fragments and joined, rather than concatenated inline, so that
+# an annotation value containing a quote cannot corrupt the JSON.
+################################################################################
+
+json_escape() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'; }
+
+spec=()
+
+# The ServiceAccount's token is what kubectl inside the pod authenticates
+# with. Some sites set automountServiceAccountToken=false on the default SA;
+# the pod-level field overrides the ServiceAccount's, so setting it here works
+# regardless of how the SA is configured and avoids guessing SA names.
+spec+=('"automountServiceAccountToken": true')
+
+[[ -n ${service_account} ]] && spec+=("\"serviceAccountName\": \"$(json_escape "${service_account}")\"")
+[[ -n ${node} ]] && spec+=("\"nodeName\": \"$(json_escape "${node}")\"")
+
+if ${host_network}; then
+    spec+=('"hostNetwork": true')
+    # Without this the pod inherits the node's resolv.conf, cluster DNS
+    # disappears, and every service lookup fails - which looks exactly like
+    # the bug you are hunting.
+    spec+=('"dnsPolicy": "ClusterFirstWithHostNet"')
+    if ${sysctl}; then
+        echo "netshoot: hostNetwork - ICMP ping will need CAP_NET_RAW on this node" >&2
+        sysctl=false
+    fi
+fi
+
+if ${sysctl}; then
+    # net.ipv4.ping_group_range is on Kubernetes' *safe* sysctl list, so it is
+    # accepted under both the baseline and restricted Pod Security Standards.
+    # It lets ping use an unprivileged SOCK_DGRAM ICMP socket, so ping works
+    # with no capability at all. See docs/explanations/design.md.
+    spec+=('"securityContext": {"sysctls": [{"name": "net.ipv4.ping_group_range", "value": "0 2147483647"}]}')
+fi
+
+# Namespaces with a LimitRange requiring requests will otherwise reject the
+# pod outright. NETSHOOT_REQUESTS=100m/128Mi
+if [[ -n ${NETSHOOT_REQUESTS:-} ]]; then
+    req_cpu=${NETSHOOT_REQUESTS%%/*}
+    req_mem=${NETSHOOT_REQUESTS##*/}
+    spec+=("\"containers\": [{\"name\": \"${name}\", \"resources\": {\"requests\": {\"cpu\": \"$(json_escape "${req_cpu}")\", \"memory\": \"$(json_escape "${req_mem}")\"}}}]")
+fi
+
+metadata=
+if [[ ${#annotations[@]} -gt 0 ]]; then
+    frags=()
+    for a in "${annotations[@]}"; do
+        [[ ${a} == *=* ]] || die "--annotation expects KEY=VALUE, got '${a}'"
+        frags+=("\"$(json_escape "${a%%=*}")\": \"$(json_escape "${a#*=}")\"")
+    done
+    metadata="\"metadata\": {\"annotations\": {$(IFS=,; echo "${frags[*]}")}}, "
+fi
+
+overrides="{\"apiVersion\": \"v1\", ${metadata}\"spec\": {$(IFS=,; echo "${spec[*]}")}}"
+
+run_args=(
+    "${name}"
+    -n "${namespace}"
+    --image "${image}:${version}"
+    --restart=Never
+    --overrides="${overrides}"
+)
+
+if ${print}; then
+    kubectl run "${run_args[@]}" --dry-run=client -o yaml --command -- bash
+    exit 0
+fi
+
+# Validate locally, so a malformed override is a readable message here rather
+# than an API rejection after the pod-delete step has already run.
+kubectl run "${run_args[@]}" --dry-run=client -o yaml --command -- bash >/dev/null
+
+echo "netshoot: namespace ${namespace}, pod ${name}, image ${image}:${version}"
+
+# Turn the two rejections people will actually hit into advice.
+explain_failure() {
+    local out=$1
+    if grep -qi 'limitrange\|exceeded quota\|must specify' <<<"${out}"; then
+        echo "
+netshoot: this namespace requires resource requests. Retry with:
+    NETSHOOT_REQUESTS=100m/128Mi netshoot ..." >&2
+    elif grep -qi 'sysctl' <<<"${out}"; then
+        echo "
+netshoot: this namespace rejected the ping sysctl. Retry with --no-sysctl
+          (ping will then need CAP_NET_RAW; nc -zv is unaffected)." >&2
+    fi
+}
+
+if ${keep}; then
+    phase=$(kubectl get pod "${name}" -n "${namespace}" -o jsonpath='{.status.phase}' 2>/dev/null || true)
+    if [[ ${phase} == "Running" ]]; then
+        running_image=$(kubectl get pod "${name}" -n "${namespace}" -o jsonpath='{.spec.containers[0].image}')
+        echo "netshoot: attaching to existing pod (image ${running_image})"
+    else
+        [[ -n ${phase} ]] && kubectl delete pod "${name}" -n "${namespace}" --ignore-not-found=true
+        # sleep infinity as PID 1, so exiting your shell does not kill the pod
+        # and several shells can share it.
+        if ! out=$(kubectl run "${run_args[@]}" --command -- sleep infinity 2>&1); then
+            echo "${out}" >&2; explain_failure "${out}"; exit 1
+        fi
+        kubectl wait --for=condition=Ready "pod/${name}" -n "${namespace}" --timeout=120s
+    fi
+    if [[ -n ${command_arg} ]]; then
+        exec kubectl exec -i "${name}" -n "${namespace}" -- bash -c "${command_arg}"
+    fi
+    exec kubectl exec -ti "${name}" -n "${namespace}" -- bash
+fi
+
+# Ephemeral: clear any pod left behind by a dropped terminal, then run
+# attached with --rm so it disappears when you are done.
+kubectl delete pod "${name}" -n "${namespace}" --ignore-not-found=true >/dev/null
+
+if [[ -n ${command_arg} ]]; then
+    exec kubectl run "${run_args[@]}" --rm -i --command -- bash -c "${command_arg}"
+fi
+exec kubectl run "${run_args[@]}" --rm -ti --command -- bash
