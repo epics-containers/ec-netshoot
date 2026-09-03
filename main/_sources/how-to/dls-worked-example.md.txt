@@ -1,8 +1,7 @@
 # A Worked Session (Diamond Light Source)
 
-A real session on beamline I07, annotated. Other facilities should be able to
-follow the same shape with their own service names — the only DLS-specific
-parts are the `module load` and the gateway service.
+DLS Specific instructions for `ec-netshoot` a tool for debugging device connectivity
+issues in-cluster.
 
 ## Install the launcher (once)
 
@@ -53,7 +52,7 @@ PING bl07i-mo-step-09.diamond.ac.uk (172.23.107.174) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.076/0.095/0.115/0.019 ms
 ```
 
-Two things worth noting. This is the **pod** network, not `--host-network`:
+Note this is the **pod** network, because we did not  `netshoot --host-network`:
 beamline device networks are routed from pods as well as from nodes, so device
 reachability needs no special flags.
 
@@ -86,11 +85,7 @@ From bl09i-nt-netsw-04-04r.diamond.ac.uk (172.23.66.109) icmp_seq=2 Destination 
 4 packets transmitted, 0 received, +4 errors, 100% packet loss, time 3099ms
 ```
 
-**This is the single most useful thing on this page.** The service is perfectly
-healthy. A ClusterIP is a *virtual* address: kube-proxy rewrites traffic to the
-service's declared **ports** and nothing else. ICMP has no port, so nothing
-rewrites it, and the packet leaves with a destination address that nothing in
-the cluster claims.
+This fails because there is no HW responding to ping at the service address.
 
 **A failed ping to a Service means nothing. Use `nc -zv`.**
 
@@ -114,8 +109,9 @@ nc -zv excalibur-01-odin-data-0 10004-10008
 
 ## EPICS through the gateway
 
-The pod network has no broadcast, so default CA name search finds nothing. At
-DLS the answer is the gateway service rather than `--host-network`:
+The pod network has no broadcast, so default CA name search finds nothing.
+You can do the below to behave like a non-host-network channel access client,
+or use `--host-network`:
 
 ```bash
 export EPICS_CA_ADDR_LIST=i07-epics-gateways:9064
@@ -140,12 +136,7 @@ Two follow-ups worth knowing:
 
 ```bash
 cainfo BL07I-VA-IONP-06:STA      # which server actually answered — the gateway
-caget -w5 SOME:MISSING:PV        # bound timeout, rather than hanging
 ```
-
-If you need broadcast search exactly as an IOC does it, `netshoot -h` gives you
-the node's network stack — but then you are testing what a workstation tests,
-and the gateway route above is what services in the cluster actually use.
 
 ## Other things worth a try
 
