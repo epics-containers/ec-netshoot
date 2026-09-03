@@ -101,14 +101,10 @@ nc -zv excalibur-01-odin-data-0 10004-10008
 
 ## EPICS through the gateway
 
-UPDATE: I've found that caget works without using the gateway from this pod
-a surprising result that requires more investigation!
-
 The pod network has no broadcast, so default CA name search finds nothing. At
 DLS the answer is the gateway service rather than `--host-network`:
 
 ```bash
-# it seems you don't actually need this unless you are testing your gateways pod
 export EPICS_CA_ADDR_LIST=i07-epics-gateways:9064
 caget BL07I-VA-IONP-06:STA
 ```
