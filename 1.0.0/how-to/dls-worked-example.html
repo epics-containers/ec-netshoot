@@ -456,9 +456,8 @@
                   
   <section id="a-worked-session-diamond-light-source">
 <h1>A Worked Session (Diamond Light Source)<a class="headerlink" href="#a-worked-session-diamond-light-source" title="Link to this heading">#</a></h1>
-<p>A real session on beamline I07, annotated. Other facilities should be able to
-follow the same shape with their own service names — the only DLS-specific
-parts are the <code class="docutils literal notranslate"><span class="pre">module</span> <span class="pre">load</span></code> and the gateway service.</p>
+<p>DLS Specific instructions for <code class="docutils literal notranslate"><span class="pre">ec-netshoot</span></code> a tool for debugging device connectivity
+issues in-cluster.</p>
 <section id="install-the-launcher-once">
 <h2>Install the launcher (once)<a class="headerlink" href="#install-the-launcher-once" title="Link to this heading">#</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="nv">$HOME</span>/bin
@@ -502,7 +501,7 @@ anything.</p>
 <span class="n">rtt</span> <span class="nb">min</span><span class="o">/</span><span class="n">avg</span><span class="o">/</span><span class="nb">max</span><span class="o">/</span><span class="n">mdev</span> <span class="o">=</span> <span class="mf">0.076</span><span class="o">/</span><span class="mf">0.095</span><span class="o">/</span><span class="mf">0.115</span><span class="o">/</span><span class="mf">0.019</span> <span class="n">ms</span>
 </pre></div>
 </div>
-<p>Two things worth noting. This is the <strong>pod</strong> network, not <code class="docutils literal notranslate"><span class="pre">--host-network</span></code>:
+<p>Note this is the <strong>pod</strong> network, because we did not  <code class="docutils literal notranslate"><span class="pre">netshoot</span> <span class="pre">--host-network</span></code>:
 beamline device networks are routed from pods as well as from nodes, so device
 reachability needs no special flags.</p>
 </section>
@@ -531,11 +530,7 @@ reachability needs no special flags.</p>
 <span class="mi">4</span> <span class="n">packets</span> <span class="n">transmitted</span><span class="p">,</span> <span class="mi">0</span> <span class="n">received</span><span class="p">,</span> <span class="o">+</span><span class="mi">4</span> <span class="n">errors</span><span class="p">,</span> <span class="mi">100</span><span class="o">%</span> <span class="n">packet</span> <span class="n">loss</span><span class="p">,</span> <span class="n">time</span> <span class="mi">3099</span><span class="n">ms</span>
 </pre></div>
 </div>
-<p><strong>This is the single most useful thing on this page.</strong> The service is perfectly
-healthy. A ClusterIP is a <em>virtual</em> address: kube-proxy rewrites traffic to the
-service’s declared <strong>ports</strong> and nothing else. ICMP has no port, so nothing
-rewrites it, and the packet leaves with a destination address that nothing in
-the cluster claims.</p>
+<p>This fails because there is no HW responding to ping at the service address.</p>
 <p><strong>A failed ping to a Service means nothing. Use <code class="docutils literal notranslate"><span class="pre">nc</span> <span class="pre">-zv</span></code>.</strong></p>
 </section>
 <section id="check-the-port-instead">
@@ -555,8 +550,9 @@ of that service’s ports take one command:</p>
 </section>
 <section id="epics-through-the-gateway">
 <h2>EPICS through the gateway<a class="headerlink" href="#epics-through-the-gateway" title="Link to this heading">#</a></h2>
-<p>The pod network has no broadcast, so default CA name search finds nothing. At
-DLS the answer is the gateway service rather than <code class="docutils literal notranslate"><span class="pre">--host-network</span></code>:</p>
+<p>The pod network has no broadcast, so default CA name search finds nothing.
+You can do the below to behave like a non-host-network channel access client,
+or use <code class="docutils literal notranslate"><span class="pre">--host-network</span></code>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">EPICS_CA_ADDR_LIST</span><span class="o">=</span>i07-epics-gateways:9064
 caget<span class="w"> </span>BL07I-VA-IONP-06:STA
 </pre></div>
@@ -574,12 +570,8 @@ pvxget<span class="w"> </span>BL07I-VA-IONP-06:STA
 </div>
 <p>Two follow-ups worth knowing:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cainfo<span class="w"> </span>BL07I-VA-IONP-06:STA<span class="w">      </span><span class="c1"># which server actually answered — the gateway</span>
-caget<span class="w"> </span>-w5<span class="w"> </span>SOME:MISSING:PV<span class="w">        </span><span class="c1"># bound timeout, rather than hanging</span>
 </pre></div>
 </div>
-<p>If you need broadcast search exactly as an IOC does it, <code class="docutils literal notranslate"><span class="pre">netshoot</span> <span class="pre">-h</span></code> gives you
-the node’s network stack — but then you are testing what a workstation tests,
-and the gateway route above is what services in the cluster actually use.</p>
 </section>
 <section id="other-things-worth-a-try">
 <h2>Other things worth a try<a class="headerlink" href="#other-things-worth-a-try" title="Link to this heading">#</a></h2>
