@@ -19,7 +19,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.14"
 
       # This repo is not a python project - there is no pyproject.toml and no
       # tox. docs/requirements.txt is the pinned source of truth for the only
