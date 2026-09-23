@@ -34,21 +34,37 @@ Read `/etc/resolv.conf` before anything else. Two things matter:
 
 ```bash
 nslookup my-ioc
-host my-ioc                                   # same answer, one line
 ```
 
-Use `nslookup`, not `dig`. **`dig my-ioc` does not use the search path** — it
+Use `nslookup`, not `kdig`. **`kdig my-ioc` does not use the search path** — it
 queries that name literally, returns NXDOMAIN, and looks exactly like the
-service not existing. You would need `dig +search my-ioc`. `nslookup` and `host`
-honour the search path by default, and their output is five lines rather than
-twenty.
+service not existing. `nslookup` applies the search path, and its output is
+five lines rather than twenty.
 
-`dig` is still the right tool when you need a specific record type, want to
-bypass the resolver, or care about TTLs:
+:::{warning}
+`nslookup` here is **busybox's**, which applies the search path **only to names
+with no dots** and ignores `ndots`. So `nslookup my-ioc.other-ns` (or
+`kubernetes.default`) is queried literally and returns NXDOMAIN, even though
+`nc`, `curl` and the EPICS tools resolve it fine. For a `service.namespace`
+name, use `getent`, which goes through the same resolver as the applications
+and honours both the search path and `ndots`:
 
 ```bash
-dig SRV _pva._tcp.my-ioc.i07-beamline.svc.cluster.local
-dig @10.43.0.10 my-ioc.i07-beamline.svc.cluster.local   # ask cluster DNS directly
+getent hosts my-ioc.other-ns
+```
+
+Or give `nslookup` the fully-qualified name
+(`my-ioc.other-ns.svc.cluster.local`).
+:::
+
+`kdig` (knot's `dig`, with the same syntax) is still the right tool when you
+need a specific record type, want to bypass the resolver, or care about TTLs.
+Give it the fully-qualified name:
+
+```bash
+kdig SRV _pva._tcp.my-ioc.i07-beamline.svc.cluster.local
+kdig @10.43.0.10 my-ioc.i07-beamline.svc.cluster.local   # ask cluster DNS directly
+khost my-ioc.i07-beamline.svc.cluster.local              # one-line answer
 ```
 
 A ClusterIP Service resolves to its virtual IP. A **headless** Service
