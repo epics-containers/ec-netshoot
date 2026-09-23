@@ -32,7 +32,8 @@ LABEL org.opencontainers.image.title="ec-netshoot" \
 # under any Pod Security Standard and in clusters that drop CAP_NET_RAW.
 #   netcat-openbsd     nc -zv, and port ranges: nc -zv moxa1 4000-4010
 #   socat              relays, UDP probes, unix sockets
-#   knot-dnsutils      kdig and khost - record types, specific servers, TTLs.
+#   knot-dnsutils      kdig - record types, specific servers, TTLs.
+#   knot-host          khost (packaged separately from knot-dnsutils).
 #                      Chosen over bind9-dnsutils, whose bind9-libs -> libxml2
 #                      -> libicu74 hard-dependency chain costs ~43 MB for a
 #                      Unicode library nothing here uses. nslookup comes from
@@ -63,6 +64,7 @@ RUN apt-get update -y && \
         iputils-tracepath \
         jq \
         knot-dnsutils \
+        knot-host \
         less \
         libcap2-bin \
         netcat-openbsd \

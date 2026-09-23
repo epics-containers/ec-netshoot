@@ -13,7 +13,7 @@ under any Pod Security Standard and in clusters that drop `CAP_NET_RAW`.
 | `nc` (netcat-openbsd) | TCP reachability — `nc -zv host port`, and port ranges |
 | `socat` | Relays, UDP probes, unix sockets, ad-hoc listeners |
 | `nslookup` (busybox) | Cluster DNS — **honours the search path**, so `nslookup my-ioc` works |
-| `kdig`, `khost` (knot-dnsutils) | When you need a record type, a specific server, or TTLs. Same syntax as `dig`/`host`, but query the name literally, so give the fully-qualified name |
+| `kdig`, `khost` (knot-dnsutils, knot-host) | When you need a record type, a specific server, or TTLs. Same syntax as `dig`/`host`, but query the name literally, so give the fully-qualified name |
 | `ss` | What is listening and what is connected |
 | `ip` | Interfaces, addresses, routes |
 | `tracepath` | Path tracing **and path MTU**, with no raw socket |
