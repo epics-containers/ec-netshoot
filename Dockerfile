@@ -32,9 +32,11 @@ LABEL org.opencontainers.image.title="ec-netshoot" \
 # under any Pod Security Standard and in clusters that drop CAP_NET_RAW.
 #   netcat-openbsd     nc -zv, and port ranges: nc -zv moxa1 4000-4010
 #   socat              relays, UDP probes, unix sockets
-#   bind9-dnsutils     nslookup and dig - cluster DNS and upstream resolution
-#   bind9-host         host(1); only a Recommends of bind9-dnsutils, so named
-#                      explicitly or --no-install-recommends drops it
+#   knot-dnsutils      kdig and khost - record types, specific servers, TTLs.
+#                      Chosen over bind9-dnsutils, whose bind9-libs -> libxml2
+#                      -> libicu74 hard-dependency chain costs ~43 MB for a
+#                      Unicode library nothing here uses. nslookup comes from
+#                      busybox (see below).
 #   iproute2           ss -tulpn and the real ip(8)
 #   iputils-tracepath  path trace and path MTU, via UDP + IP_RECVERR
 #   traceroute         its default UDP method uses IP_RECVERR too; only -I/-T
@@ -53,8 +55,6 @@ LABEL org.opencontainers.image.title="ec-netshoot" \
 # nothing inside the pod can recover it and the tools only waste your time.
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends \
-        bind9-dnsutils \
-        bind9-host \
         ca-certificates \
         curl \
         iperf3 \
@@ -62,6 +62,7 @@ RUN apt-get update -y && \
         iputils-ping \
         iputils-tracepath \
         jq \
+        knot-dnsutils \
         less \
         libcap2-bin \
         netcat-openbsd \
@@ -76,8 +77,9 @@ RUN apt-get update -y && \
 # for nc, ping, traceroute, nslookup and ip across the PATH. busybox's
 # nc in particular has no -z, so if it wins the PATH race the headline feature
 # of this image silently disappears. Remove the shadows where we now ship the
-# real tool, and leave the rest of busybox alone.
-RUN for applet in nc ping ping6 traceroute traceroute6 nslookup ip; do \
+# real tool, and leave the rest of busybox alone. busybox's nslookup is kept
+# deliberately: it is the only nslookup in the image.
+RUN for applet in nc ping ping6 traceroute traceroute6 ip; do \
         for dir in /bin /usr/bin /sbin /usr/sbin; do \
             link="${dir}/${applet}"; \
             if [ -L "${link}" ]; then \
@@ -90,7 +92,9 @@ RUN for applet in nc ping ping6 traceroute traceroute6 nslookup ip; do \
 
 # kubectl, so you can ask the API server what it thinks the topology is from
 # inside the namespace. Runs as the pod's ServiceAccount, not as you.
-# This is now the single largest thing in the image.
+# This is the single largest thing in the image, so strip it: the Go DWARF
+# data is ~17 MB and unused at runtime. binutils is installed and purged in the
+# same layer so it costs nothing in the final image.
 RUN arch="$(dpkg --print-architecture)" && \
     version="${KUBECTL_VERSION}" && \
     if [ -z "${version}" ]; then \
@@ -99,6 +103,12 @@ RUN arch="$(dpkg --print-architecture)" && \
     curl -fsSLo /usr/local/bin/kubectl \
         "https://dl.k8s.io/release/${version}/bin/linux/${arch}/kubectl" && \
     chmod +x /usr/local/bin/kubectl && \
+    apt-get update -y && \
+    apt-get install -y --no-install-recommends binutils && \
+    strip /usr/local/bin/kubectl && \
+    apt-get purge -y --auto-remove binutils && \
+    rm -rf /var/lib/apt/lists/* && \
+    /usr/local/bin/kubectl version --client >/dev/null && \
     echo "kubectl ${version}" > /etc/ec-netshoot-versions
 
 # `k` as a shortcut. A symlink rather than a shell alias, so it also works
@@ -132,7 +142,7 @@ RUN getcap -r /usr 2>/dev/null | cut -d' ' -f1 | xargs -r -n1 setcap -r
 # things that would otherwise break silently and only show up mid-incident.
 RUN nc -h 2>&1 | grep -q -- '-z' || { echo "FATAL: nc has no -z; busybox won the PATH race" >&2; exit 1; } && \
     [ -z "$(getcap -r /usr 2>/dev/null)" ] || { echo "FATAL: file capabilities remain: $(getcap -r /usr 2>/dev/null)" >&2; exit 1; } && \
-    for tool in nslookup host dig ss socat tracepath traceroute iperf3 openssl \
+    for tool in nslookup khost kdig ss socat tracepath traceroute iperf3 openssl \
                 jq lsusb curl kubectl k caget caput camonitor cainfo pvxget pvxinfo; do \
         command -v "${tool}" >/dev/null || { echo "FATAL: ${tool} missing" >&2; exit 1; }; \
     done

@@ -34,21 +34,21 @@ Read `/etc/resolv.conf` before anything else. Two things matter:
 
 ```bash
 nslookup my-ioc
-host my-ioc                                   # same answer, one line
 ```
 
-Use `nslookup`, not `dig`. **`dig my-ioc` does not use the search path** — it
+Use `nslookup`, not `kdig`. **`kdig my-ioc` does not use the search path** — it
 queries that name literally, returns NXDOMAIN, and looks exactly like the
-service not existing. You would need `dig +search my-ioc`. `nslookup` and `host`
-honour the search path by default, and their output is five lines rather than
-twenty.
+service not existing. `nslookup` honours the search path by default, and its
+output is five lines rather than twenty.
 
-`dig` is still the right tool when you need a specific record type, want to
-bypass the resolver, or care about TTLs:
+`kdig` (knot's `dig`, with the same syntax) is still the right tool when you
+need a specific record type, want to bypass the resolver, or care about TTLs.
+Give it the fully-qualified name:
 
 ```bash
-dig SRV _pva._tcp.my-ioc.i07-beamline.svc.cluster.local
-dig @10.43.0.10 my-ioc.i07-beamline.svc.cluster.local   # ask cluster DNS directly
+kdig SRV _pva._tcp.my-ioc.i07-beamline.svc.cluster.local
+kdig @10.43.0.10 my-ioc.i07-beamline.svc.cluster.local   # ask cluster DNS directly
+khost my-ioc.i07-beamline.svc.cluster.local              # one-line answer
 ```
 
 A ClusterIP Service resolves to its virtual IP. A **headless** Service

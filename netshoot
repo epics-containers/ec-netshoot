@@ -31,7 +31,7 @@ usage() {
 usage: netshoot [options]
 
 Launch a network diagnostics pod in a Kubernetes namespace, with the EPICS
-tools and the good versions of nc, dig, ss, tracepath and friends.
+tools and the good versions of nc, kdig, ss, tracepath and friends.
 
 Options:
   -n, --namespace NS      namespace (default: current context)
