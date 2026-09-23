@@ -12,7 +12,8 @@ under any Pod Security Standard and in clusters that drop `CAP_NET_RAW`.
 |---|---|
 | `nc` (netcat-openbsd) | TCP reachability — `nc -zv host port`, and port ranges |
 | `socat` | Relays, UDP probes, unix sockets, ad-hoc listeners |
-| `nslookup` (busybox) | Cluster DNS — **honours the search path**, so `nslookup my-ioc` works |
+| `nslookup` (busybox) | Cluster DNS. Applies the search path **only to names with no dots**, so `nslookup my-ioc` works but `nslookup my-ioc.other-ns` does not; use `getent` or the FQDN for those |
+| `getent hosts` | Resolves exactly as the applications do (glibc: search path and `ndots`), so `getent hosts my-ioc.other-ns` works |
 | `kdig`, `khost` (knot-dnsutils, knot-host) | When you need a record type, a specific server, or TTLs. Same syntax as `dig`/`host`, but query the name literally, so give the fully-qualified name |
 | `ss` | What is listening and what is connected |
 | `ip` | Interfaces, addresses, routes |

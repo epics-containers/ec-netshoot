@@ -94,9 +94,7 @@ RUN for applet in nc ping ping6 traceroute traceroute6 ip; do \
 
 # kubectl, so you can ask the API server what it thinks the topology is from
 # inside the namespace. Runs as the pod's ServiceAccount, not as you.
-# This is the single largest thing in the image, so strip it: the Go DWARF
-# data is ~17 MB and unused at runtime. binutils is installed and purged in the
-# same layer so it costs nothing in the final image.
+# Release binaries are already built with -s -w, so there is nothing to strip.
 RUN arch="$(dpkg --print-architecture)" && \
     version="${KUBECTL_VERSION}" && \
     if [ -z "${version}" ]; then \
@@ -105,11 +103,6 @@ RUN arch="$(dpkg --print-architecture)" && \
     curl -fsSLo /usr/local/bin/kubectl \
         "https://dl.k8s.io/release/${version}/bin/linux/${arch}/kubectl" && \
     chmod +x /usr/local/bin/kubectl && \
-    apt-get update -y && \
-    apt-get install -y --no-install-recommends binutils && \
-    strip /usr/local/bin/kubectl && \
-    apt-get purge -y --auto-remove binutils && \
-    rm -rf /var/lib/apt/lists/* && \
     /usr/local/bin/kubectl version --client >/dev/null && \
     echo "kubectl ${version}" > /etc/ec-netshoot-versions
 
@@ -144,7 +137,7 @@ RUN getcap -r /usr 2>/dev/null | cut -d' ' -f1 | xargs -r -n1 setcap -r
 # things that would otherwise break silently and only show up mid-incident.
 RUN nc -h 2>&1 | grep -q -- '-z' || { echo "FATAL: nc has no -z; busybox won the PATH race" >&2; exit 1; } && \
     [ -z "$(getcap -r /usr 2>/dev/null)" ] || { echo "FATAL: file capabilities remain: $(getcap -r /usr 2>/dev/null)" >&2; exit 1; } && \
-    for tool in nslookup khost kdig ss socat tracepath traceroute iperf3 openssl \
+    for tool in nslookup getent khost kdig ss socat tracepath traceroute iperf3 openssl \
                 jq lsusb curl kubectl k caget caput camonitor cainfo pvxget pvxinfo; do \
         command -v "${tool}" >/dev/null || { echo "FATAL: ${tool} missing" >&2; exit 1; }; \
     done

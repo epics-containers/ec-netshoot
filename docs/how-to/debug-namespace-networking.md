@@ -38,8 +38,24 @@ nslookup my-ioc
 
 Use `nslookup`, not `kdig`. **`kdig my-ioc` does not use the search path** — it
 queries that name literally, returns NXDOMAIN, and looks exactly like the
-service not existing. `nslookup` honours the search path by default, and its
-output is five lines rather than twenty.
+service not existing. `nslookup` applies the search path, and its output is
+five lines rather than twenty.
+
+:::{warning}
+`nslookup` here is **busybox's**, which applies the search path **only to names
+with no dots** and ignores `ndots`. So `nslookup my-ioc.other-ns` (or
+`kubernetes.default`) is queried literally and returns NXDOMAIN, even though
+`nc`, `curl` and the EPICS tools resolve it fine. For a `service.namespace`
+name, use `getent`, which goes through the same resolver as the applications
+and honours both the search path and `ndots`:
+
+```bash
+getent hosts my-ioc.other-ns
+```
+
+Or give `nslookup` the fully-qualified name
+(`my-ioc.other-ns.svc.cluster.local`).
+:::
 
 `kdig` (knot's `dig`, with the same syntax) is still the right tool when you
 need a specific record type, want to bypass the resolver, or care about TTLs.
