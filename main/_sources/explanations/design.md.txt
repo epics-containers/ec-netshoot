@@ -121,7 +121,8 @@ The base image runs `busybox --install -s`, which scatters applet symlinks for
 feature of this image is silently gone.
 
 The Dockerfile removes the busybox symlinks for exactly those applets where a
-real tool is installed, leaving the rest of busybox intact, and then asserts
+real tool is installed (so not `nslookup`, which busybox provides), leaving the
+rest of busybox intact, and then asserts
 `nc -h` mentions `-z` at build time. That assertion is the reason the failure
 cannot reach you.
 
