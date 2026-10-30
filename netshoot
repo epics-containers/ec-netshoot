@@ -25,6 +25,7 @@ service_account=
 name=
 command_arg=
 annotations=()
+mounts=()
 
 usage() {
     cat <<'USAGE'
@@ -50,6 +51,16 @@ Options:
       --annotation K=V    add a pod annotation (repeatable). For example
                           --annotation usb-compat=enabled, which on DLS nodes
                           mounts the whole of /dev/bus/usb
+      --pvc CLAIM:PATH[:ro]
+                          mount PersistentVolumeClaim CLAIM (in the same
+                          namespace) at PATH (repeatable). A ReadWriteOnce
+                          claim already in use pins the pod to that node
+      --host-path DIR:PATH[:ro]
+                          mount node directory DIR at PATH (repeatable).
+                          Rejected by namespaces enforcing the baseline or
+                          restricted Pod Security Standards. Sites may also
+                          force such pods to run as a non-root user; at DLS
+                          this is the beamline's account
   -i, --image IMAGE       container image (default: IMAGE_DEFAULT_DOC)
   -v, --version VERSION   image version (default: VERSION_DEFAULT_DOC)
   -c, --command 'CMD'     run one command and exit, instead of a shell
@@ -63,6 +74,7 @@ Examples:
   netshoot -c 'nc -zv my-ioc 5064'              # one-shot reachability check
   netshoot --node bl07i-node1 --host-network    # the node's view, same node
   netshoot -k --name iperf-server               # long-lived, for iperf3 etc.
+  netshoot --pvc my-ioc-data:/data:ro           # look inside an IOC's volume
 USAGE
 }
 
@@ -78,6 +90,8 @@ while [[ $# -gt 0 ]]; do
         --name)              name=${2:?--name needs a value}; shift 2 ;;
         --service-account)   service_account=${2:?--service-account needs a value}; shift 2 ;;
         --annotation)        annotations+=("${2:?--annotation needs K=V}"); shift 2 ;;
+        --pvc)               mounts+=("pvc:${2:?--pvc needs CLAIM:PATH}"); shift 2 ;;
+        --host-path)         mounts+=("host-path:${2:?--host-path needs DIR:PATH}"); shift 2 ;;
         -i|--image)          image=${2:?--image needs a value}; shift 2 ;;
         -v|--version)        version=${2:?--version needs a value}; shift 2 ;;
         -c|--command)        command_arg=${2:?--command needs a value}; shift 2 ;;
@@ -89,7 +103,9 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-command -v kubectl >/dev/null || die "kubectl not found on PATH"
+command -v kubectl >/dev/null || die "kubectl not found on PATH.
+          At DLS, run 'module load ec/iXX' first (e.g. ec/i07), which also
+          sets the cluster context and namespace."
 
 # Pod names must be RFC1123 labels. Most site usernames already are, but not
 # all of them - fed IDs with dots or capitals would otherwise fail at the API
@@ -152,12 +168,49 @@ if ${sysctl}; then
     spec+=('"securityContext": {"sysctls": [{"name": "net.ipv4.ping_group_range", "value": "0 2147483647"}]}')
 fi
 
+# Overrides to the one container that kubectl run generates. It is named
+# after the pod, which is the key the strategic merge below matches it on.
+container=()
+
 # Namespaces with a LimitRange requiring requests will otherwise reject the
 # pod outright. NETSHOOT_REQUESTS=100m/128Mi
 if [[ -n ${NETSHOOT_REQUESTS:-} ]]; then
     req_cpu=${NETSHOOT_REQUESTS%%/*}
     req_mem=${NETSHOOT_REQUESTS##*/}
-    spec+=("\"containers\": [{\"name\": \"${name}\", \"resources\": {\"requests\": {\"cpu\": \"$(json_escape "${req_cpu}")\", \"memory\": \"$(json_escape "${req_mem}")\"}}}]")
+    container+=("\"resources\": {\"requests\": {\"cpu\": \"$(json_escape "${req_cpu}")\", \"memory\": \"$(json_escape "${req_mem}")\"}}")
+fi
+
+# --pvc and --host-path, each recorded as KIND:SOURCE:PATH[:ro].
+if [[ ${#mounts[@]} -gt 0 ]]; then
+    vols=()
+    vmounts=()
+    i=0
+    for m in "${mounts[@]}"; do
+        kind=${m%%:*}
+        rest=${m#*:}
+        read_only=false
+        if [[ ${rest} == *:ro ]]; then
+            read_only=true
+            rest=${rest%:ro}
+        fi
+        [[ ${rest} == ?*:/* ]] || die "--${kind} expects SOURCE:/ABSOLUTE/PATH[:ro], got '${m#*:}'"
+        src=${rest%%:*}
+        path=${rest#*:}
+        vol="${kind}-${i}"
+        if [[ ${kind} == pvc ]]; then
+            vols+=("{\"name\": \"${vol}\", \"persistentVolumeClaim\": {\"claimName\": \"$(json_escape "${src}")\", \"readOnly\": ${read_only}}}")
+        else
+            vols+=("{\"name\": \"${vol}\", \"hostPath\": {\"path\": \"$(json_escape "${src}")\"}}")
+        fi
+        vmounts+=("{\"name\": \"${vol}\", \"mountPath\": \"$(json_escape "${path}")\", \"readOnly\": ${read_only}}")
+        i=$((i + 1))
+    done
+    spec+=("\"volumes\": [$(IFS=,; echo "${vols[*]}")]")
+    container+=("\"volumeMounts\": [$(IFS=,; echo "${vmounts[*]}")]")
+fi
+
+if [[ ${#container[@]} -gt 0 ]]; then
+    spec+=("\"containers\": [{\"name\": \"${name}\", $(IFS=,; echo "${container[*]}")}]")
 fi
 
 metadata=
@@ -178,6 +231,10 @@ run_args=(
     --image "${image}:${version}"
     --restart=Never
     --overrides="${overrides}"
+    # The default override type is a JSON merge patch, which replaces arrays
+    # wholesale: a containers entry would discard the generated container's
+    # image and command. Strategic merge matches containers by name instead.
+    --override-type=strategic
 )
 
 if ${print}; then
