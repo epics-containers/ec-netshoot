@@ -18,8 +18,13 @@ in new shells, though not in the one you are in.
 ## Open a shell in a namespace
 
 ```bash
+module load ec/i07
 netshoot -n i07-beamline
 ```
+
+At DLS, `module load ec/iXX` puts `kubectl` on your PATH and points it at the
+beamline's cluster; without it `netshoot` stops with "kubectl not found". Other
+sites need whatever gives them a working `kubectl` for the cluster.
 
 The pod is created, you land in a shell inside it, and when you exit the pod is
 deleted. The first run on a node pulls the image, which takes a while; after

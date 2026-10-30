@@ -20,6 +20,8 @@ chmod +x netshoot
 | `--name NAME` | `netshoot-$USER` | Sanitised to a valid RFC1123 label. Lets you run two at once |
 | `--service-account N` | `default` | For namespaces where the default SA lacks RBAC |
 | `--annotation K=V` | none | Repeatable. e.g. `--annotation usb-compat=enabled` |
+| `--pvc CLAIM:PATH[:ro]` | none | Repeatable. Mounts a PersistentVolumeClaim from the same namespace. A `ReadWriteOnce` claim already in use can only be mounted on the node that holds it |
+| `--host-path DIR:PATH[:ro]` | none | Repeatable. Mounts a directory from the node. Rejected under the baseline and restricted Pod Security Standards. Sites may also force such pods to run as a non-root user; at DLS this is the beamline's account, so you see host files with its permissions and cannot do anything that needs root |
 | `-i`, `--image IMAGE` | `ghcr.io/epics-containers/ec-netshoot` | |
 | `-v`, `--version VER` | `latest` | `latest` tracks the most recent release tag |
 | `-c`, `--command 'CMD'` | interactive | One-shot; useful in scripts |
@@ -47,7 +49,9 @@ chmod +x netshoot
 ```
 
 plus `nodeName`, `hostNetwork` + `dnsPolicy`, `serviceAccountName`,
-annotations and resource requests when the corresponding options are given.
+annotations, volumes and resource requests when the corresponding options are
+given. `kubectl run` applies it as a strategic merge, so the volume mounts and
+requests are added to the generated container rather than replacing it.
 `--print` shows the whole thing.
 
 Each of those is doing something specific and non-obvious; see
