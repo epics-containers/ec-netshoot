@@ -24,7 +24,7 @@ cd $HOME/bin
 curl -O https://raw.githubusercontent.com/epics-containers/ec-netshoot/main/netshoot
 chmod +x netshoot
 
-module load ec/i07     # DLS: puts kubectl on PATH and sets the context
+module load deploy-tools ec/i07     # DLS: puts kubectl on PATH and sets the context
 netshoot -n i07-beamline
 ```
 
