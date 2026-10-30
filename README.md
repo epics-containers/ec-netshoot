@@ -7,7 +7,7 @@ Network diagnostics for EPICS services in Kubernetes.
 
 A container image and a launcher script for answering "can this thing reach
 that thing" from inside a Kubernetes namespace — with the good versions of
-`nc`, `dig`, `ss` and `tracepath`, a `ping` that works without privilege
+`nc`, `kdig`, `ss` and `tracepath`, a `ping` that works without privilege
 elevation, `kubectl`, and the EPICS tools (`caget`, `pvxget`) that let you
 check a service the way an IOC would.
 
