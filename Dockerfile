@@ -10,7 +10,7 @@
 ARG BASE_IMAGE=ghcr.io/epics-containers/epics-base-runtime
 # Pinned deliberately. A diagnostics tool that changes under you between
 # incidents is a bad diagnostics tool. Bump it on purpose, not by drift.
-ARG BASE_VERSION=7.0.10ec5
+ARG BASE_VERSION=7.0.10ec6
 
 FROM ${BASE_IMAGE}:${BASE_VERSION}
 
